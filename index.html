@@ -1790,10 +1790,16 @@ function renderArcGrid() {
   const fragment = document.createDocumentFragment();
 
   if (desired.length === 0) {
-    // No results
-    const msg = document.createElement('div');
-    msg.className   = 'no-results';
-    msg.textContent = '🌊 No arcs match your search.';
+    // No results — give it a stable key so the diffing loop can remove it
+    // when the search is cleared and results reappear.
+    let msg = existingNodes.get('no-results');
+    if (!msg) {
+      msg = document.createElement('div');
+      msg.className    = 'no-results';
+      msg.dataset.key  = 'no-results';
+      msg.textContent  = '🌊 No arcs match your search.';
+    }
+    existingNodes.delete('no-results');
     fragment.appendChild(msg);
   } else {
     for (const item of desired) {
@@ -1804,7 +1810,7 @@ function renderArcGrid() {
           node = document.createElement('div');
           node.className    = 'saga-divider';
           node.dataset.key  = key;
-          node.innerHTML    = `<span>${item.saga} Saga</span>`;
+          node.innerHTML    = `<span>${item.saga.endsWith('Saga') ? item.saga : item.saga + ' Saga'}</span>`;
         }
         existingNodes.delete(key);
         fragment.appendChild(node);
@@ -1862,7 +1868,7 @@ function buildArcNode(a, st, pg, key) {
         ${tags}
       </div>
       <div class="arc-eps">${epsLabel}</div>
-      <div class="arc-saga">${a.saga} Saga</div>
+      <div class="arc-saga">${a.saga.endsWith('Saga') ? a.saga : a.saga + ' Saga'}</div>
       ${a.note ? `<div class="${noteClass}">ℹ️ ${a.note}</div>` : ''}
     </div>
     <div class="arc-progress-mini">
