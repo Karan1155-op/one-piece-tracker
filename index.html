@@ -33,37 +33,72 @@
   />
   <style>
     /* ── Design Tokens ─────────────────────────────────────────────────────── */
+    /*
+     * Theme system: swapping data-theme="dark"|"light" on <html> repoints
+     * all semantic variables. Accent colours are shared; surface/text
+     * colours are redefined per theme. Transition on body ensures a smooth
+     * cross-fade when toggling.
+     */
+
+    /* ── Shared accents (same in both themes) ────────────────────────────── */
     :root {
+      --gold:          #c8903a;
+      --gold-light:    #e8b04a;
+      --gold-dim:      #8a6020;
+      --red:           #c0392b;
+      --red-bright:    #e74c3c;
+      --teal:          #1a8a7a;
+      --teal-light:    #22b09e;
+      --purple:        #7c4fa0;
+      --purple-light:  #a06cc8;
+      --amber:         #d4851a;
+      --elbaf:         #1a5c8a;
+      --elbaf-light:   #2a8cc8;
+    }
+
+    /* ── Dark theme (default) ────────────────────────────────────────────── */
+    :root,
+    [data-theme="dark"] {
       --navy:          #0a0e1a;
       --deep:          #0d1526;
       --panel:         #111a2e;
       --border:        #1e2d4a;
-
-      --gold:          #c8903a;
-      --gold-light:    #e8b04a;
-      --gold-dim:      #8a6020;
-
-      --red:           #c0392b;
-      --red-bright:    #e74c3c;
-
-      --teal:          #1a8a7a;
-      --teal-light:    #22b09e;
-
-      --purple:        #7c4fa0;
-      --purple-light:  #a06cc8;
-
-      --amber:         #d4851a;
-
-      --elbaf:         #1a5c8a;
-      --elbaf-light:   #2a8cc8;
-
       --text:          #d4c5a9;
       --text-muted:    #7a8499;
       --text-dim:      #4a5566;
       --white:         #f0ead8;
-
       --glow:          rgba(200, 144, 58, 0.15);
       --focus-ring:    0 0 0 3px rgba(200, 144, 58, 0.5);
+      /* inputs & surfaces */
+      --input-bg:      rgba(255, 255, 255, 0.04);
+      --input-color:   var(--white);
+      --search-bg:     rgba(255, 255, 255, 0.04);
+      --textarea-bg:   rgba(255, 255, 255, 0.03);
+    }
+
+    /* ── Light / Parchment theme ─────────────────────────────────────────── */
+    [data-theme="light"] {
+      --navy:          #f5ede2;   /* page background — warm parchment        */
+      --deep:          #ede0d0;   /* toast / dialog background               */
+      --panel:         #fdf6ec;   /* card surfaces                           */
+      --border:        #c8a97a;   /* warm tan border                         */
+      --text:          #2c1e0f;   /* dark ink body text                      */
+      --text-muted:    #6b4f30;
+      --text-dim:      #9a7a55;
+      --white:         #1a0f05;   /* "white" = darkest ink for headings      */
+      --glow:          rgba(180, 120, 20, 0.12);
+      --focus-ring:    0 0 0 3px rgba(180, 120, 20, 0.35);
+      --input-bg:      rgba(0, 0, 0, 0.04);
+      --input-color:   var(--text);
+      --search-bg:     rgba(0, 0, 0, 0.04);
+      --textarea-bg:   rgba(0, 0, 0, 0.03);
+      /* override gold/teal to be readable on parchment */
+      --gold:          #a0700a;
+      --gold-light:    #b88010;
+      --gold-dim:      #7a5208;
+      --teal:          #156b5e;
+      --teal-light:    #1a8a7a;
+      --elbaf-light:   #1a6fa0;
     }
 
     /* ── Reset ─────────────────────────────────────────────────────────────── */
@@ -82,6 +117,7 @@
       font-family:  'Crimson Pro', Georgia, serif;
       min-height:   100vh;
       overflow-x:   hidden;
+      transition:   background .3s ease, color .3s ease;
     }
 
     /* Radial depth gradient — cheap, compositor-only */
@@ -1021,6 +1057,135 @@
       justify-content: center;
     }
 
+    /* ── Theme Toggle Button ──────────────────────────────────────────────── */
+    header {
+      position: relative;   /* anchor for the absolute-positioned toggle */
+    }
+
+    .theme-toggle {
+      position:        absolute;
+      top:             16px;
+      right:           0;
+      width:           40px;
+      height:          40px;
+      border-radius:   50%;
+      border:          1px solid var(--border);
+      background:      var(--panel);
+      cursor:          pointer;
+      display:         flex;
+      align-items:     center;
+      justify-content: center;
+      font-size:       18px;
+      transition:      background .2s, border-color .2s, transform .15s;
+      z-index:         10;
+      line-height:     1;
+      padding:         0;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--gold);
+      background:   var(--deep);
+      transform:    scale(1.1);
+    }
+
+    .theme-toggle:active { transform: scale(0.93); }
+
+    .theme-toggle:focus-visible {
+      outline:    none;
+      box-shadow: var(--focus-ring);
+    }
+
+    /* ── Light-mode surface overrides ────────────────────────────────────── */
+    /* Cards, inputs, search, textarea use CSS variables — most just work.   */
+    /* These rules handle the few places with hardcoded rgba() values.       */
+
+    [data-theme="light"] body::before {
+      background:
+        radial-gradient(ellipse 80% 40% at 50% 100%, rgba(180, 120, 40, .12) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 30% at 20% 80%,  rgba(150, 100, 30, .08) 0%, transparent 60%);
+    }
+
+    [data-theme="light"] body::after {
+      background: repeating-linear-gradient(
+        transparent        0px,
+        transparent        18px,
+        rgba(150, 100, 30, .08) 18px,
+        rgba(150, 100, 30, .08) 20px
+      );
+    }
+
+    [data-theme="light"] .progress-hero {
+      background: linear-gradient(135deg, var(--panel) 0%, rgba(230, 210, 180, .6) 100%);
+    }
+
+    [data-theme="light"] .progress-bar-wrap {
+      background: rgba(0, 0, 0, .06);
+    }
+
+    [data-theme="light"] .arc-bar {
+      background: rgba(0, 0, 0, .08);
+    }
+
+    [data-theme="light"] input[type="number"] {
+      background: var(--input-bg);
+      color:      var(--text);
+    }
+
+    [data-theme="light"] #arcSearch {
+      background: var(--search-bg);
+      color:      var(--text);
+    }
+
+    [data-theme="light"] textarea {
+      background: var(--textarea-bg);
+    }
+
+    [data-theme="light"] .toggle-pill {
+      background: rgba(0, 0, 0, .05);
+    }
+
+    [data-theme="light"] .arc-item.type-canon.completed {
+      border-color: rgba(21, 107, 94, .35);
+      background:   rgba(21, 107, 94, .08);
+    }
+
+    [data-theme="light"] .arc-item.type-canon.current {
+      border-color: rgba(160, 112, 10, .45);
+      background:   rgba(160, 112, 10, .07);
+      box-shadow:   0 0 10px rgba(160, 112, 10, .06);
+    }
+
+    [data-theme="light"] .arc-item.type-filler {
+      border-color: rgba(124, 79, 160, .3);
+    }
+
+    [data-theme="light"] .arc-item.type-filler.completed {
+      border-color: rgba(124, 79, 160, .45);
+      background:   rgba(124, 79, 160, .07);
+    }
+
+    [data-theme="light"] .arc-item.type-filler.current {
+      border-color: rgba(124, 79, 160, .55);
+      background:   rgba(124, 79, 160, .08);
+    }
+
+    [data-theme="light"] .arc-item.locked:not(.type-upcoming) {
+      opacity: .5;
+    }
+
+    [data-theme="light"] .toast {
+      background: linear-gradient(135deg, var(--deep), var(--panel));
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .15);
+    }
+
+    [data-theme="light"] .dialog-backdrop {
+      background: rgba(0, 0, 0, .45);
+    }
+
+    [data-theme="light"] .dialog {
+      box-shadow: 0 16px 48px rgba(0, 0, 0, .2);
+    }
+
     /* ── Responsive ────────────────────────────────────────────────────────── */
     @media (max-width: 500px) {
       .progress-hero-inner { justify-content: center; text-align: center; }
@@ -1039,6 +1204,12 @@
 
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <header>
+    <button
+      class="theme-toggle"
+      id="themeToggle"
+      aria-label="Switch to light mode"
+      title="Toggle theme"
+    >🌙</button>
     <span class="skull-icon" aria-hidden="true">☠️</span>
     <h1>One Piece Tracker</h1>
     <p class="subtitle">I'm going to be King of the Pirates</p>
@@ -1350,7 +1521,7 @@ const state = {
    ═══════════════════════════════════════════════════════════════════════════ */
 function loadState() {
   // Migrate from any older storage keys
-  const keys = ['op_v5', 'op_v4', 'op_v3', 'op_tracker_v2', 'op_tracker_v1'];
+  const keys = ['op_v4', 'op_v3', 'op_tracker_v2', 'op_tracker_v1'];
   for (const k of keys) {
     const raw = localStorage.getItem(k);
     if (raw) {
@@ -2054,8 +2225,50 @@ function showToast(msg, flavor) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   THEME  (Dark ↔ Light)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const THEME_STORAGE_KEY = 'op_theme';
+
+/**
+ * applyTheme(theme)
+ * Sets data-theme on <html> and updates the toggle button icon + aria-label.
+ * Called both at boot (to restore saved preference) and on every toggle click.
+ */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+
+  const btn    = document.getElementById('themeToggle');
+  const isDark = theme === 'dark';
+
+  // Sun = currently dark, clicking switches to light
+  // Moon = currently light, clicking switches to dark
+  btn.textContent = isDark ? '☀️' : '🌙';
+  btn.setAttribute('aria-label',
+    isDark ? 'Switch to light / parchment mode'
+           : 'Switch to dark mode'
+  );
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next    = current === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(THEME_STORAGE_KEY, next);
+  applyTheme(next);
+}
+
+function loadTheme() {
+  // Default to dark if no preference saved
+  const saved = localStorage.getItem(THEME_STORAGE_KEY) || 'dark';
+  applyTheme(saved);
+}
+
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+/* ═══════════════════════════════════════════════════════════════════════════
    BOOT
    ═══════════════════════════════════════════════════════════════════════════ */
+loadTheme();    // MUST run before renderAll so colours are correct on first paint
 loadState();
 renderAll();
 setView(state.view);            // also syncs toggle button aria-pressed
