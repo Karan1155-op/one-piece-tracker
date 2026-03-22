@@ -1776,7 +1776,7 @@ function renderArcGrid() {
     // Type filter
     if (state.view === 'canon'   && a.type === 'filler')                  return false;
     if (state.view === 'filler'  && a.type !== 'filler')                  return false;
-    if (state.view === 'ongoing' && a.eps[1] !== null)                    return false;
+    if (state.view === 'ongoing' && !(a.eps[1] === null && a.type === 'canon')) return false;
     // Search
     if (query && !a.name.toLowerCase().includes(query)
               && !a.saga.toLowerCase().includes(query))                   return false;
@@ -1871,11 +1871,11 @@ function buildArcNode(a, st, pg, key) {
   const tags = [
     a.type === 'filler'   ? `<span class="tag-base filler-tag">Filler</span>`            : '',
     a.type === 'upcoming' ? `<span class="tag-base upcoming-tag">⚡ Upcoming</span>`      : '',
-    a.eps[1] === null     ? `<span class="tag-base ongoing-tag">🔴 Ongoing</span>`        : '',
+    (a.eps[1] === null && a.type === 'canon') ? `<span class="tag-base ongoing-tag">🔴 Ongoing</span>` : '',
     a.movie               ? `<span class="tag-base movie-tag">🎬 ${a.movie}</span>`       : '',
   ].join('');
 
-  const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : a.eps[1] === null ? `Episodes ${a.eps[0]}–${arcEnd(a)} (ongoing)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
+  const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : (a.eps[1] === null && a.type === 'canon') ? `Episodes ${a.eps[0]}–${arcEnd(a)} (ongoing)` : a.eps[1] === null ? `Episodes ${a.eps[0]}+ (est.)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
   const noteClass  = a.type === 'upcoming' ? 'arc-note note-blue' : 'arc-note';
   const pctLabel   = a.type === 'upcoming' ? 'Soon' : pg + '%';
 
