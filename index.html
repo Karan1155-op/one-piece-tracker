@@ -1724,7 +1724,7 @@ function renderHero() {
 function renderStats() {
   const ep  = state.episode;
   const tot = state.totalEps;
-  const hrs = Math.round(ep * 24 / 60);
+  const hrs = Math.round(ep * 20 / 60);  // 20 min per episode → 3 eps = 1 hour
 
   document.getElementById('statWatched').textContent   = ep;
   document.getElementById('statHours').textContent     = hrs >= 1000 ? (Math.round(hrs / 100) / 10) + 'k h' : hrs + 'h';
