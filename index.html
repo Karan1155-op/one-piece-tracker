@@ -1521,7 +1521,7 @@ const state = {
    ═══════════════════════════════════════════════════════════════════════════ */
 function loadState() {
   // Migrate from any older storage keys
-  const keys = ['op_v4', 'op_v3', 'op_tracker_v2', 'op_tracker_v1'];
+  const keys = ['op_v5', 'op_v4', 'op_v3', 'op_tracker_v2', 'op_tracker_v1'];
   for (const k of keys) {
     const raw = localStorage.getItem(k);
     if (raw) {
