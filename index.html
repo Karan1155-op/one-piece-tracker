@@ -643,9 +643,10 @@
       transition:     all .2s;
     }
 
-    .toggle-option.active-all    { background: linear-gradient(135deg, var(--gold-dim), var(--amber)); color: var(--white); }
-    .toggle-option.active-canon  { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
-    .toggle-option.active-filler { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
+    .toggle-option.active-all     { background: linear-gradient(135deg, var(--gold-dim), var(--amber)); color: var(--white); }
+    .toggle-option.active-canon   { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
+    .toggle-option.active-filler  { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
+    .toggle-option.active-ongoing { background: linear-gradient(135deg, #16a34a, #22c55e); color: var(--white); }
 
     /* ── Search Bar ────────────────────────────────────────────────────────── */
     .search-wrap {
@@ -737,6 +738,7 @@
     .dot-canon    { background: var(--gold); }
     .dot-filler   { background: var(--purple-light); }
     .dot-upcoming { background: var(--elbaf-light); }
+    .dot-ongoing  { background: #22c55e; box-shadow: 0 0 5px #22c55e; animation: pulse-tag 2s ease-in-out infinite; }
 
     /* ── Saga Divider ──────────────────────────────────────────────────────── */
     .saga-divider {
@@ -861,6 +863,7 @@
     .filler-tag   { border: 1px solid var(--purple);      color: var(--purple-light); }
     .movie-tag    { border: 1px solid var(--amber);       color: var(--amber);        }
     .upcoming-tag { border: 1px solid var(--elbaf-light); color: var(--elbaf-light);  animation: pulse-tag 2s ease-in-out infinite; }
+    .ongoing-tag  { border: 1px solid #22c55e;            color: #22c55e;             animation: pulse-tag 2s ease-in-out infinite; }
 
     @keyframes pulse-tag {
       0%, 100% { opacity: .6; }
@@ -1322,9 +1325,10 @@
   <div class="section-header">
     <h2>The Grand Line</h2>
     <div class="toggle-pill" role="group" aria-label="Filter arcs by type">
-      <button class="toggle-option active-all"  id="toggle-all"    onclick="setView('all')"    aria-pressed="true">All</button>
-      <button class="toggle-option"             id="toggle-canon"  onclick="setView('canon')"  aria-pressed="false">Canon</button>
-      <button class="toggle-option"             id="toggle-filler" onclick="setView('filler')" aria-pressed="false">Filler</button>
+      <button class="toggle-option active-all"  id="toggle-all"     onclick="setView('all')"     aria-pressed="true">All</button>
+      <button class="toggle-option"             id="toggle-canon"   onclick="setView('canon')"   aria-pressed="false">Canon</button>
+      <button class="toggle-option"             id="toggle-filler"  onclick="setView('filler')"  aria-pressed="false">Filler</button>
+      <button class="toggle-option"             id="toggle-ongoing" onclick="setView('ongoing')" aria-pressed="false">Ongoing</button>
     </div>
   </div>
 
@@ -1356,6 +1360,7 @@
     <div class="legend-item"><div class="legend-dot dot-canon"></div>Canon</div>
     <div class="legend-item"><div class="legend-dot dot-filler"></div>Filler</div>
     <div class="legend-item"><div class="legend-dot dot-upcoming"></div>Upcoming</div>
+    <div class="legend-item"><div class="legend-dot dot-ongoing"></div>Ongoing</div>
   </div>
 
   <!-- Arc Grid -->
@@ -1499,7 +1504,7 @@ const ARCS = [
 
   // ── Final Saga ────────────────────────────────────────────────────────────
   { name: 'Egghead',            saga: 'Final Saga',        eps: [1086, 1155], icon: '🤖',  type: 'canon',   note: 'Concluded Dec 28 2025 · Ep 1155 — "Off to the Long-Awaited Elbaph"' },
-  { name: 'Elbaf',              saga: 'Final Saga',        eps: [1156, 1220], icon: '🏔️',  type: 'upcoming', note: '⚡ Begins April 5 2026 · Est. 60–70 eps · Land of Giants · Final Saga Arc 2' },
+  { name: 'Elbaf',              saga: 'Final Saga',        eps: [1156, null], icon: '🏔️',  type: 'upcoming', note: '⚡ Begins April 5 2026 · Land of Giants · Final Saga Arc 2' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1639,21 +1644,32 @@ function getCurrentArc(ep) {
   return ARCS[ARCS.length - 1];
 }
 
+/**
+ * arcEnd(a)
+ * Returns the resolved end episode for an arc.
+ * If eps[1] is null (Elbaf while ongoing), uses state.totalEps — the live
+ * value fetched from the API — so the range auto-expands as new eps air.
+ */
+function arcEnd(a) {
+  return a.eps[1] ?? state.totalEps;
+}
+
 function arcStatus(a, ep) {
   if (a.type === 'upcoming') return 'locked';
-  if (ep >= a.eps[1])        return 'completed';
+  if (ep >= arcEnd(a))       return 'completed';
   if (ep >= a.eps[0])        return 'current';
   return 'locked';
 }
 
 function arcProgress(a, ep) {
   if (a.type === 'upcoming' || ep < a.eps[0]) return 0;
-  if (ep >= a.eps[1]) return 100;
-  return Math.round((ep - a.eps[0] + 1) / (a.eps[1] - a.eps[0] + 1) * 100);
+  const end = arcEnd(a);
+  if (ep >= end) return 100;
+  return Math.round((ep - a.eps[0] + 1) / (end - a.eps[0] + 1) * 100);
 }
 
 function computeMilestones(oldEp, newEp) {
-  return ARCS.filter(a => a.type !== 'upcoming' && newEp >= a.eps[1] && oldEp < a.eps[1]);
+  return ARCS.filter(a => a.type !== 'upcoming' && newEp >= arcEnd(a) && oldEp < arcEnd(a));
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1728,7 +1744,7 @@ function renderStats() {
 
   document.getElementById('statWatched').textContent   = ep;
   document.getElementById('statHours').textContent     = hrs >= 1000 ? (Math.round(hrs / 100) / 10) + 'k h' : hrs + 'h';
-  document.getElementById('statArcs').textContent      = ARCS.filter(a => a.type === 'canon'  && ep >= a.eps[1]).length;
+  document.getElementById('statArcs').textContent      = ARCS.filter(a => a.type === 'canon'  && ep >= arcEnd(a)).length;
   document.getElementById('statFiller').textContent    = ARCS.filter(a => a.type === 'filler' && ep >= a.eps[1]).length;
   document.getElementById('statRemaining').textContent = Math.max(0, tot - ep);
 }
@@ -1758,8 +1774,9 @@ function renderArcGrid() {
   // ── Build the ordered list of items to display ─────────────────────────
   const filtered = ARCS.filter(a => {
     // Type filter
-    if (state.view === 'canon'  && a.type === 'filler')                   return false;
-    if (state.view === 'filler' && a.type !== 'filler')                   return false;
+    if (state.view === 'canon'   && a.type === 'filler')                  return false;
+    if (state.view === 'filler'  && a.type !== 'filler')                  return false;
+    if (state.view === 'ongoing' && a.eps[1] !== null)                    return false;
     // Search
     if (query && !a.name.toLowerCase().includes(query)
               && !a.saga.toLowerCase().includes(query))                   return false;
@@ -1854,10 +1871,11 @@ function buildArcNode(a, st, pg, key) {
   const tags = [
     a.type === 'filler'   ? `<span class="tag-base filler-tag">Filler</span>`            : '',
     a.type === 'upcoming' ? `<span class="tag-base upcoming-tag">⚡ Upcoming</span>`      : '',
+    a.eps[1] === null     ? `<span class="tag-base ongoing-tag">🔴 Ongoing</span>`        : '',
     a.movie               ? `<span class="tag-base movie-tag">🎬 ${a.movie}</span>`       : '',
   ].join('');
 
-  const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
+  const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : a.eps[1] === null ? `Episodes ${a.eps[0]}–${arcEnd(a)} (ongoing)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
   const noteClass  = a.type === 'upcoming' ? 'arc-note note-blue' : 'arc-note';
   const pctLabel   = a.type === 'upcoming' ? 'Soon' : pg + '%';
 
@@ -1936,7 +1954,7 @@ function attachArcClick(node, a) {
     if (st === 'completed') {
       showToast(`${f ? '🟣' : '✅'} ${a.name} — Completed!`, f ? 'filler' : '');
     } else {
-      showToast(`⚡ Now in: ${a.name} (${a.eps[0]}–${a.eps[1]})`, '');
+      showToast(`⚡ Now in: ${a.name} (${a.eps[0]}–${arcEnd(a)})`, '');
     }
   });
 }
@@ -2003,8 +2021,9 @@ function setView(v) {
   saveState();
 
   // Update toggle button states
-  ['all', 'canon', 'filler'].forEach(x => {
+  ['all', 'canon', 'filler', 'ongoing'].forEach(x => {
     const btn = document.getElementById('toggle-' + x);
+    if (!btn) return;  // ongoing button only exists in DOM, safe to skip if absent
     btn.className    = 'toggle-option' + (x === v ? ' active-' + x : '');
     btn.setAttribute('aria-pressed', x === v ? 'true' : 'false');
   });
@@ -2165,7 +2184,7 @@ document.getElementById('importInput').addEventListener('change', function () {
     // any optional fields that might be absent in older export versions.
     state.episode     = parsed.episode;
     state.notes       = typeof parsed.notes === 'string' ? parsed.notes : state.notes;
-    state.view        = ['all', 'canon', 'filler'].includes(parsed.view) ? parsed.view : 'all';
+    state.view        = ['all', 'canon', 'filler', 'ongoing'].includes(parsed.view) ? parsed.view : 'all';
     state.searchQuery = '';   // reset search so the restored arc list is visible immediately
 
     saveState();
