@@ -2219,7 +2219,6 @@ function movieStatus(movie) {
  * toggleMovieWatched(movie)
  * Marks or unmarks a movie as watched.
  * Called only from the explicit Watch/Unmark button — not the card body.
- * Plays the Don! sound when marking as watched.
  */
 function toggleMovieWatched(movie) {
   if (state.watchedMovies.has(movie.id)) {
@@ -2227,7 +2226,6 @@ function toggleMovieWatched(movie) {
     showToast(`↩ ${movie.name} — unmarked`, '');
   } else {
     state.watchedMovies.add(movie.id);
-    playClickSound();
     showToast(`🎬 ${movie.name} — Watched!`, '');
   }
   saveState();
