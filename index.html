@@ -3002,6 +3002,15 @@ function startMusic() {
 
 window.addEventListener('load', startMusic);
 
+// Pause music when app is minimized, resume when opened
+document.addEventListener('visibilitychange', () => {
+  const bgm = document.getElementById('bgm');
+  if (document.hidden) {
+    bgm.pause();
+  } else {
+    bgm.play().catch(() => {});
+  }
+});
 
 // Start live countdown (every second)
 updateCountdown();
