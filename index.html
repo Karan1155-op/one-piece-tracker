@@ -1488,12 +1488,13 @@
       .toggle-pill          { width: 100%; }
       .elbaf-countdown      { margin-left: 0; }
       footer                { justify-content: center; }
-      /* NEW: Make Share Button smaller on mobile */
+      /* NEW: Make Share Button even smaller on mobile */
       .share-btn {
-        top: 12px;
-        right: 12px;
-        padding: 4px 10px;
-        font-size: 8px;
+        top: 10px;
+        right: 10px;
+        padding: 3px 7px;
+        font-size: 7px;
+        letter-spacing: 0.05em;
       }
     }
   </style>
@@ -1524,14 +1525,6 @@
     <div class="elbaf-countdown" id="elbafCountdown" aria-live="polite" aria-label="Countdown to Elbaf arc">
       <span id="cdValue">…</span>
       <span class="cd-label" id="cdLabel">loading</span>
-    </div>
-  </div>
-
-  <!-- ── View Toggle ─────────────────────────────────────────────────────── -->
-  <div class="view-control">
-    <div class="view-pill" role="group" aria-label="Switch between TV Series and Movies">
-      <button class="view-btn active" id="viewbtn-series" onclick="setMainView('series')" aria-pressed="true">📺 TV Series</button>
-      <button class="view-btn"        id="viewbtn-movies" onclick="setMainView('movies')" aria-pressed="false">🎬 Movies</button>
     </div>
   </div>
 
@@ -1629,6 +1622,14 @@
     <div class="stat-card">
       <div class="stat-num" id="statRemaining" aria-live="polite">—</div>
       <div class="stat-desc">Eps Remaining</div>
+    </div>
+  </div>
+
+    <!-- ── View Toggle ─────────────────────────────────────────────────────── -->
+  <div class="view-control">
+    <div class="view-pill" role="group" aria-label="Switch between TV Series and Movies">
+      <button class="view-btn active" id="viewbtn-series" onclick="setMainView('series')" aria-pressed="true">📺 TV Series</button>
+      <button class="view-btn"        id="viewbtn-movies" onclick="setMainView('movies')" aria-pressed="false">🎬 Movies</button>
     </div>
   </div>
 
