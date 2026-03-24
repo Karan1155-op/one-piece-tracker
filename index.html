@@ -1488,6 +1488,13 @@
       .toggle-pill          { width: 100%; }
       .elbaf-countdown      { margin-left: 0; }
       footer                { justify-content: center; }
+      /* NEW: Make Share Button smaller on mobile */
+      .share-btn {
+        top: 12px;
+        right: 12px;
+        padding: 4px 10px;
+        font-size: 8px;
+      }
     }
   </style>
 </head>
@@ -3103,7 +3110,7 @@ function shareProgress() {
     // Updated default share text to also mention the Saga
     const shareData = {
       title: 'My One Piece Journey',
-      text: `I'm on Episode ${ep} (${arcName} in the ${displaySaga})! Track your One Piece journey ad-free:`,
+      text: `I'm on Episode ${ep} (${arcName} in the ${displaySaga})!`,
       files: [file]
     };
     
