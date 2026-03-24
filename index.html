@@ -2426,57 +2426,47 @@ function toggleMovieWatched(movie) {
  * Each card has an explicit Watch / Unmark button on the right.
  */
 function renderMovieGrid() {
-  const grid = document.getElementById('movieGrid');
-  if (!grid) return;
+  const grid = document.getElementById('movieGrid'); 
+  if (!grid) return; 
   grid.innerHTML = '';
-
-  const fragment = document.createDocumentFragment();
-
-  for (const movie of MOVIES) {
-    const st = movieStatus(movie);  // 'watched' | 'unwatched'
-
-    const recLabel = movie.rec === 'high'  ? '⭐ Highly Recommended'
-                   : movie.rec === 'watch' ? '👍 Worth Watching'
-                   :                         '⏭ Skip/Recap';
-    const recClass = 'tag-base ' + (
-      movie.rec === 'high'  ? 'rec-high'  :
-      movie.rec === 'watch' ? 'rec-watch' : 'rec-skip'
-    );
-
-    const badge     = st === 'watched' ? '✅' : '🎬';
-    const hintText  = `Best after Ep ${movie.requiredEpisode}`;
-    const btnLabel  = st === 'watched' ? 'Unmark' : '✓ Watched';
-    const btnClass  = st === 'watched' ? 'movie-watch-btn btn-unmark' : 'movie-watch-btn btn-mark';
-
-    const div = document.createElement('div');
+  
+  for (const m of MOVIES) {
+    const st = state.watchedMovies.has(m.id) ? 'watched' : 'unwatched';
+    
+    // Restore the recommendation tags (Highly Recommended, Skip, etc.)
+    const recLabel = m.rec === 'high' ? '⭐ Highly Recommended' : m.rec === 'watch' ? '👍 Worth Watching' : '⏭ Skip/Recap';
+    const recClass = 'tag-base ' + (m.rec === 'high' ? 'rec-high' : m.rec === 'watch' ? 'rec-watch' : 'rec-skip');
+    
+    const div = document.createElement('div'); 
     div.className = `movie-item ${st}`;
-    div.setAttribute('role', 'listitem');
-
+    
+    // Inject the "Best after Ep" text directly into the subtitle so mobile never hides it
     div.innerHTML = `
       <div class="movie-meta">
         <div class="movie-title-row">
-          <span class="movie-title">${movie.icon} ${movie.name}</span>
+          <span class="movie-title">${m.icon} ${m.name}</span>
           <span class="${recClass}">${recLabel}</span>
         </div>
-        <div class="movie-sub">Movie ${movie.id} · ${movie.year}</div>
-        ${movie.note ? `<div class="movie-note">ℹ️ ${movie.note}</div>` : ''}
+        <div class="movie-sub" style="color: var(--gold-light); margin-top: 4px; font-weight: 600;">
+          ⚓ Best after Ep ${m.requiredEpisode}
+        </div>
+        ${m.note ? `<div class="movie-note" style="margin-top: 4px;">ℹ️ ${m.note}</div>` : ''}
       </div>
-      <div class="movie-after">${hintText}</div>
-      <div class="movie-badge">${badge}</div>
-      <button class="${btnClass}" aria-label="${btnLabel} ${movie.name}">${btnLabel}</button>
+      <div class="movie-badge">${st === 'watched' ? '✅' : '🎬'}</div>
+      <button class="movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}">
+        ${st==='watched' ? 'Unmark' : '✓ Watched'}
+      </button>
     `;
-
-    // Only the button triggers the watch toggle — not the card body
-    div.querySelector('.movie-watch-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleMovieWatched(movie);
-    });
-
-    fragment.appendChild(div);
+    
+    div.querySelector('.movie-watch-btn').onclick = (e) => { 
+      e.stopPropagation(); 
+      toggleMovieWatched(m); 
+    };
+    
+    grid.appendChild(div);
   }
-
-  grid.appendChild(fragment);
 }
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN VIEW TOGGLE  (TV Series ↔ Movies)
