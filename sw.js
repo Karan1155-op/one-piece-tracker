@@ -8,7 +8,7 @@
  * so the old cache is pruned automatically on the next visit.
  */
 
-const CACHE_VERSION  = 'op-tracker-v24';
+const CACHE_VERSION  = 'op-tracker-v25';
 const CACHE_NAME     = CACHE_VERSION;
 
 /**
