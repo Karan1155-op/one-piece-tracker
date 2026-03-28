@@ -1279,10 +1279,10 @@
       position: relative;   /* anchor for the absolute-positioned toggle */
     }
 
-    .theme-toggle {
+    .theme-toggle,
+    .mute-toggle {
       position:        absolute;
       top:             16px;
-      right:           0;
       width:           40px;
       height:          40px;
       border-radius:   50%;
@@ -1299,15 +1299,21 @@
       padding:         0;
     }
 
-    .theme-toggle:hover {
+    .theme-toggle { right: 0; }
+    .mute-toggle  { left: 0; }
+
+    .theme-toggle:hover,
+    .mute-toggle:hover {
       border-color: var(--gold);
       background:   var(--deep);
       transform:    scale(1.1);
     }
 
-    .theme-toggle:active { transform: scale(0.93); }
+    .theme-toggle:active,
+    .mute-toggle:active { transform: scale(0.93); }
 
-    .theme-toggle:focus-visible {
+    .theme-toggle:focus-visible,
+    .mute-toggle:focus-visible {
       outline:    none;
       box-shadow: var(--focus-ring);
     }
@@ -1590,6 +1596,14 @@
       aria-label="Switch to light mode"
       title="Toggle theme"
     >🌙</button>
+
+    <button
+      class="mute-toggle"
+      id="muteToggle"
+      aria-label="Toggle background music"
+      title="Toggle music"
+    >🔊</button>
+
     <span class="skull-icon" aria-hidden="true">☠️</span>
     <h1>Track Your One Piece Journey</h1>
     <p class="subtitle">I'm going to be King of the Pirates</p>
@@ -3281,6 +3295,8 @@ setMainView(state.mainView);    // syncs TV Series / Movies toggle + visibility
    BACKGROUND MUSIC
    ═══════════════════════════════════════════════════════════════════════════ */
 function startMusic() {
+  if (isMuted) return;
+
   const bgm = document.getElementById('bgm');
   bgm.volume = 0; // Start silent for the fade-in effect
 
@@ -3316,6 +3332,37 @@ function startMusic() {
   }, 3000); 
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   MUTE BUTTON LOGIC
+   ═══════════════════════════════════════════════════════════════════════════ */
+let isMuted = localStorage.getItem('op_muted') === 'true';
+
+// Set the initial icon when the page loads
+const muteBtn = document.getElementById('muteToggle');
+if (muteBtn) {
+  muteBtn.textContent = isMuted ? '🔇' : '🔊';
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  localStorage.setItem('op_muted', isMuted);
+  const bgm = document.getElementById('bgm');
+  
+  if (isMuted) {
+    muteBtn.textContent = '🔇';
+    bgm.pause();
+  } else {
+    muteBtn.textContent = '🔊';
+    // Ensure the audio source is present before playing
+    if (!bgm.src || bgm.src.endsWith('null') || bgm.src === '') {
+      bgm.src = 'assets/music_track.mp3';
+    }
+    bgm.play().catch(() => {});
+  }
+}
+
+muteBtn.addEventListener('click', toggleMute);
+
 window.addEventListener('load', startMusic);
 
 // Pause music when app is minimized, resume when opened
@@ -3324,7 +3371,19 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     bgm.pause();
   } else {
-    bgm.play().catch(() => {});
+    if (!isMuted) {
+      bgm.src = 'assets/music_track.mp3';
+      bgm.play().then(() => {
+        bgm.volume = 0;
+        let fade = setInterval(() => {
+          if (bgm.volume < 0.4) {
+            bgm.volume = Math.min(bgm.volume + 0.05, 0.4);
+          } else {
+            clearInterval(fade);
+          }
+        }, 200);
+      }).catch(() => {});
+    }
   }
 });
 
