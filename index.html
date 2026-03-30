@@ -647,6 +647,10 @@
     .toggle-option.active-canon   { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
     .toggle-option.active-filler  { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
     .toggle-option.active-ongoing { background: linear-gradient(135deg, #16a34a, #22c55e); color: var(--white); }
+    .toggle-option.active-sp-all     { background: linear-gradient(135deg, var(--gold-dim), var(--amber)); color: var(--white); }
+    .toggle-option.active-sp-special { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
+    .toggle-option.active-sp-ova     { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
+    .toggle-option.active-sp-short   { background: linear-gradient(135deg, var(--elbaf), var(--elbaf-light)); color: var(--white); }
 
     /* ── Search Bar ────────────────────────────────────────────────────────── */
     .search-wrap {
@@ -1271,7 +1275,7 @@
       .movie-item        { grid-template-columns: 1fr auto auto; }
       .movie-after       { display: none; }
       .movie-watch-btn   { padding: 6px 9px; font-size: 7px; }
-      .view-btn    { padding: 10px 18px; font-size: 10px; }
+      .view-btn          { padding: 8px 12px; font-size: 9px; }
     }
 
     /* ── Theme Toggle Button ──────────────────────────────────────────────── */
@@ -1719,16 +1723,15 @@
     </div>
   </div>
 
-    <!-- ── View Toggle ─────────────────────────────────────────────────────── -->
   <div class="view-control">
-    <div class="view-pill" role="group" aria-label="Switch between TV Series and Movies">
-      <button class="view-btn active" id="viewbtn-series" onclick="setMainView('series')" aria-pressed="true">📺 TV Series</button>
-      <button class="view-btn"        id="viewbtn-movies" onclick="setMainView('movies')" aria-pressed="false">🎬 Movies</button>
+    <div class="view-pill" role="group" aria-label="Switch between views">
+      <button class="view-btn active" id="viewbtn-series"   onclick="setMainView('series')"   aria-pressed="true">📺 TV Series</button>
+      <button class="view-btn"        id="viewbtn-movies"   onclick="setMainView('movies')"   aria-pressed="false">🎬 Movies</button>
+      <button class="view-btn"        id="viewbtn-specials" onclick="setMainView('specials')" aria-pressed="false">📀 Specials</button>
     </div>
   </div>
 
-  <!-- ── Arc List Header ──────────────────────────────────────────────────── -->
-  <div class="section-header">
+  <div class="section-header" id="seriesFilterHeader">
     <h2>The Grand Line</h2>
     <div class="toggle-pill" role="group" aria-label="Filter arcs by type">
       <button class="toggle-option active-all"  id="toggle-all"     onclick="setView('all')"     aria-pressed="true">All</button>
@@ -1738,28 +1741,34 @@
     </div>
   </div>
 
-  <!-- Search bar -->
+  <div class="section-header" id="moviesFilterHeader" style="display: none;">
+    <h2>Theatrical Films</h2>
+  </div>
+
+  <div class="section-header" id="specialsFilterHeader" style="display: none;">
+    <h2>Extra Adventures</h2>
+    <div class="toggle-pill" role="group" aria-label="Filter specials by type">
+      <button class="toggle-option active-sp-all" id="toggle-sp-all"     onclick="setSpecialView('all')"     aria-pressed="true">All</button>
+      <button class="toggle-option"               id="toggle-sp-special" onclick="setSpecialView('Special')" aria-pressed="false">Specials</button>
+      <button class="toggle-option"               id="toggle-sp-ova"     onclick="setSpecialView('OVA')"     aria-pressed="false">OVAs</button>
+      <button class="toggle-option"               id="toggle-sp-short"   onclick="setSpecialView('Short')"   aria-pressed="false">Shorts</button>
+    </div>
+  </div>
+
   <div class="search-wrap">
     <span class="search-icon" aria-hidden="true">🔍</span>
-    <label for="arcSearch" class="sr-only">Search arcs by name</label>
+    <label for="arcSearch" class="sr-only">Search</label>
     <input
       type="search"
       id="arcSearch"
       placeholder="Search arcs…"
       autocomplete="off"
       oninput="handleSearch()"
-      aria-controls="arcGrid"
-      aria-label="Search arcs by name"
+      aria-label="Search"
     />
-    <button
-      class="search-clear"
-      id="searchClear"
-      onclick="clearSearch()"
-      aria-label="Clear search"
-    >×</button>
+    <button class="search-clear" id="searchClear" onclick="clearSearch()" aria-label="Clear search">×</button>
   </div>
 
-  <!-- Legend -->
   <div class="legend" aria-hidden="true">
     <div class="legend-item"><div class="legend-dot dot-done"></div>Completed</div>
     <div class="legend-item"><div class="legend-dot dot-current"></div>Current</div>
@@ -1769,15 +1778,16 @@
     <div class="legend-item"><div class="legend-dot dot-ongoing"></div>Ongoing</div>
   </div>
 
-  <!-- TV Series Section -->
   <div id="seriesSection">
-    <!-- Arc Grid -->
     <div class="arc-grid" id="arcGrid" role="list" aria-label="Story arcs"></div>
   </div>
 
-  <!-- Movies Section -->
   <div id="moviesSection" style="display:none;">
     <div class="movie-grid" id="movieGrid" role="list" aria-label="One Piece movies"></div>
+  </div>
+
+  <div id="specialsSection" style="display:none;">
+    <div class="movie-grid" id="specialGrid" role="list" aria-label="One Piece Specials and OVAs"></div>
   </div>
 
   <!-- ── Captain's Log ────────────────────────────────────────────────────── -->
@@ -1948,12 +1958,42 @@ const MOVIES = [
   { id:  7, name: 'The Giant Mechanical Soldier of Karakuri Castle',year: 2006, icon: '🏯',  requiredEpisode: 228,   rec: 'skip',  note: 'Fun non-canon filler adventure. Skippable.' },
   { id:  8, name: 'The Desert Princess and the Pirates',            year: 2007, icon: '🏜️',  requiredEpisode: 130,   rec: 'skip',  note: 'Alabasta recap film. Skip if you watched the arc.' },
   { id:  9, name: 'Episode of Chopper Plus',                        year: 2008, icon: '❄️',  requiredEpisode: 130,   rec: 'skip',  note: 'Drum Island recap with post-timeskip crew. Skip.' },
-  { id: 10, name: 'Strong World',                                   year: 2009, icon: '⚡',  requiredEpisode: 381,   rec: 'high',  note: '⭐ Canon-adjacent, written by Oda himself. Essential.' },
-  { id: 11, name: 'Film Z',                                         year: 2012, icon: '🔥',  requiredEpisode: 578,   rec: 'high',  note: '⭐ Outstanding animation and a genuinely great villain.' },
-  { id: 12, name: '3D2Y',                                           year: 2014, icon: '📅',  requiredEpisode: 516,   rec: 'watch', note: 'TV special covering the 2-year timeskip. Worth it.' },
+  { id: 10, name: 'Strong World',                                   year: 2009, icon: '⚡',  requiredEpisode: 429,   rec: 'high',  note: '⭐ Canon-adjacent, written by Oda himself. Essential.' },
+  { id: 11, name: 'One Piece 3D: Straw Hat Chase',                  year: 2011, icon: '🕺',  requiredEpisode: 381,   rec: 'skip',  note: 'Luffy wakes up to a missing crew and starts to hunt for them.' },
+  { id: 12, name: 'Film Z',                                         year: 2012, icon: '🔥',  requiredEpisode: 578,   rec: 'high',  note: '⭐ Outstanding animation and a genuinely great villain.' },
   { id: 13, name: 'Film Gold',                                      year: 2016, icon: '💰',  requiredEpisode: 750,   rec: 'high',  note: '⭐ Lavish production and great crew moments. Must-watch.' },
   { id: 14, name: 'Stampede',                                       year: 2019, icon: '🌊',  requiredEpisode: 889,   rec: 'high',  note: '⭐ 20th anniversary celebration. Fan-service done right.' },
   { id: 15, name: 'Film Red',                                       year: 2022, icon: '🎵',  requiredEpisode: 1030,  rec: 'high',  note: '⭐ Shanks lore, stunning music, canon-relevant details.' },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIALS, OVAS & SHORTS DATA
+   ═══════════════════════════════════════════════════════════════════════════ */
+const SPECIALS = [
+  { id: 'sp1',  name: 'Defeat Him! The Pirate Ganzack!', type: 'OVA',     icon: '🦀', requiredEpisode: 8,   rec: 'skip',  note: 'Produced in 1998 before the anime even started! (Non-canon)' },
+  { id: 'sp2',  name: 'Adventure in the Ocean\'s Navel', type: 'Special', icon: '🌊', requiredEpisode: 53,  rec: 'skip',  note: 'TV Special 1. Standalone treasure hunt.' },
+  { id: 'sp3',  name: 'Jango\'s Dance Carnival',         type: 'Short',   icon: '🕺', requiredEpisode: 53,  rec: 'skip',  note: 'A bizarre, fun 5-minute dance short.' },
+  { id: 'sp4',  name: 'Dream Soccer King',               type: 'Short',   icon: '⚽', requiredEpisode: 92,  rec: 'skip',  note: 'Hilarious penalty shootout short.' },
+  { id: 'sp5',  name: 'Once Upon the Great Sea!',        type: 'Special', icon: '👨‍👧', requiredEpisode: 149, rec: 'skip',  note: 'TV Special 2. Also known as A Father\'s Huge, HUGE Dream.' },
+  { id: 'sp6',  name: 'Take Aim! The Pirate Baseball King', type: 'Short',icon: '⚾', requiredEpisode: 149, rec: 'skip',  note: 'Fun baseball mini-game short.' },
+  { id: 'sp7',  name: 'Protect! The Last Great Stage',   type: 'Special', icon: '🎭', requiredEpisode: 219, rec: 'skip',  note: 'TV Special 3. Theater-themed filler adventure.' },
+  { id: 'sp8',  name: 'Detective Memoirs of Chief Luffy',type: 'Special', icon: '🕵️', requiredEpisode: 253, rec: 'skip',  note: 'Alternate reality Edo period special (Boss Luffy).' },
+  { id: 'sp16', name: 'Episode of Merry',                type: 'Special', icon: '⛵', requiredEpisode: 312, rec: 'high',  note: '⭐ Tear-jerker recap of the Going Merry.' },
+  { id: 'sp9',  name: 'Romance Dawn Story',              type: 'OVA',     icon: '🌅', requiredEpisode: 381, rec: 'watch', note: 'Jump Super Anime Tour special. Great watch.' },
+  { id: 'sp10', name: 'Strong World: Episode 0',         type: 'OVA',     icon: '🦁', requiredEpisode: 429, rec: 'high',  note: '⭐ Canon prequel to Strong World. Highly recommended.' },
+  { id: 'sp11', name: 'One Piece 3D: Trap Coaster',      type: 'Short',   icon: '🎢', requiredEpisode: 489, rec: 'skip',  note: 'A CGI theme park ride short.' },
+  { id: 'sp12', name: '3D2Y',                            type: 'Special', icon: '🔥', requiredEpisode: 516, rec: 'watch', note: 'Covers Luffy\'s 2-year training. Spoilers in credits!' },
+  { id: 'sp13', name: 'Episode of Nami',                 type: 'Special', icon: '🍊', requiredEpisode: 516, rec: 'watch', note: 'Beautifully re-animated Arlong Park recap.' },
+  { id: 'sp14', name: 'Glorious Island',                 type: 'OVA',     icon: '🏝️', requiredEpisode: 574, rec: 'skip',  note: 'Two-part prologue to Film Z.' },
+  { id: 'sp15', name: 'Episode of Luffy',                type: 'Special', icon: '👒', requiredEpisode: 578, rec: 'watch', note: 'Hand Island adventure special.' },
+  { id: 'sp17', name: 'Adventure of Nebulandia',         type: 'Special', icon: '🍄', requiredEpisode: 746, rec: 'skip',  note: 'Foxy pirates return. Standalone post-Dressrosa filler.' },
+  { id: 'sp18', name: 'Episode of Sabo',                 type: 'Special', icon: '🎩', requiredEpisode: 746, rec: 'watch', note: 'Dressrosa told from Sabo\'s perspective.' },
+  { id: 'sp19', name: 'Heart of Gold',                   type: 'Special', icon: '💛', requiredEpisode: 750, rec: 'watch', note: 'Direct tie-in and prequel to Film Gold.' },
+  { id: 'sp20', name: 'Film Gold Episode 0',             type: 'OVA',     icon: '💰', requiredEpisode: 750, rec: 'watch', note: 'Short prologue leading straight into Film Gold.' },
+  { id: 'sp21', name: 'Episode of East Blue',            type: 'Special', icon: '🌊', requiredEpisode: 802, rec: 'watch', note: 'Great modern recap of the first 5 crew members joining.' },
+  { id: 'sp22', name: 'Episode of Skypiea',              type: 'Special', icon: '☁️', requiredEpisode: 850, rec: 'skip',  note: 'Skypiea arc condensed into a 2-hour special.' },
+  { id: 'sp23', name: 'Monsters: 103 Mercies',           type: 'OVA',     icon: '🐉', requiredEpisode: 1089, rec: 'high', note: '⭐ Canon Ryuma backstory one-shot (Wano Saga).' },
+  { id: 'sp24', name: 'One Piece Fan Letter',            type: 'Special', icon: '✉️', requiredEpisode: 1122, rec: 'high', note: '⭐ Masterpiece 25th-anniversary special. Absolute must-watch.' }
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1972,6 +2012,8 @@ const state = {
   watchedMovies:   new Set(),  // Set of movie ids marked watched
   watchedFillers:  new Set(),  // Set of filler arc names explicitly watched
   skippedFillers:  new Set(),  // Set of filler arc names explicitly skipped
+  watchedSpecials: new Set(),
+  specialView:    'all',
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1992,6 +2034,8 @@ function loadState() {
         state.watchedMovies  = new Set(Array.isArray(s.watchedMovies)  ? s.watchedMovies  : []);
         state.watchedFillers = new Set(Array.isArray(s.watchedFillers) ? s.watchedFillers : []);
         state.skippedFillers = new Set(Array.isArray(s.skippedFillers) ? s.skippedFillers : []);
+        state.watchedSpecials = new Set(Array.isArray(s.watchedSpecials) ? s.watchedSpecials : []);
+        state.specialView     = s.specialView || 'all';
       } catch (_) { /* ignore corrupt data */ }
       break;
     }
@@ -2007,7 +2051,8 @@ function saveState() {
     watchedMovies:  Array.from(state.watchedMovies),
     watchedFillers:  Array.from(state.watchedFillers),
     skippedFillers:  Array.from(state.skippedFillers),
-    skippedFillers: Array.from(state.skippedFillers),
+    watchedSpecials: Array.from(state.watchedSpecials),
+    specialView:     state.specialView,
   }));
 }
 
@@ -2177,6 +2222,7 @@ function renderAll() {
   renderStats();
   renderArcGrid();
   renderMovieGrid();
+  renderSpecialGrid();
   syncInput();
   document.getElementById('notes').value = state.notes;
   // Restore correct section visibility after a full re-render
@@ -2618,24 +2664,112 @@ function renderMovieGrid() {
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SPECIALS GRID & FILTERS
+   ═══════════════════════════════════════════════════════════════════════════ */
+function setSpecialView(v) {
+  state.specialView = v;
+  saveState();
+  ['all', 'Special', 'OVA', 'Short'].forEach(x => {
+    const btn = document.getElementById('toggle-sp-' + x.toLowerCase());
+    if (!btn) return;
+    btn.className = 'toggle-option' + (x === v ? ' active-sp-' + x.toLowerCase() : '');
+    btn.setAttribute('aria-pressed', x === v ? 'true' : 'false');
+  });
+  renderSpecialGrid();
+}
+
+function toggleSpecialWatched(special) {
+  if (state.watchedSpecials.has(special.id)) {
+    state.watchedSpecials.delete(special.id);
+    showToast(`↩ ${special.name} — unmarked`, '');
+  } else {
+    state.watchedSpecials.add(special.id);
+    showToast(`📀 ${special.name} — Watched!`, '');
+  }
+  saveState();
+  renderSpecialGrid();
+}
+
+function renderSpecialGrid() {
+  const grid = document.getElementById('specialGrid'); 
+  if (!grid) return; 
+  grid.innerHTML = '';
+  
+  const query = state.searchQuery.toLowerCase().trim();
+  
+  const filteredSpecials = SPECIALS.filter(s => {
+    // Check toggle filter
+    if (state.specialView !== 'all' && s.type !== state.specialView) return false;
+    // Check search filter
+    if (query && !s.name.toLowerCase().includes(query)) return false;
+    return true;
+  });
+
+  if (filteredSpecials.length === 0) {
+    grid.innerHTML = '<div class="no-results">🌊 No specials match your search.</div>';
+    return;
+  }
+
+  for (const s of filteredSpecials) {
+    const st = state.watchedSpecials.has(s.id) ? 'watched' : 'unwatched';
+    const recLabel = s.rec === 'high' ? '⭐ Highly Recommended' : s.rec === 'watch' ? '👍 Worth Watching' : '⏭ Skip/Recap';
+    const recClass = 'tag-base ' + (s.rec === 'high' ? 'rec-high' : s.rec === 'watch' ? 'rec-watch' : 'rec-skip');
+    
+    const div = document.createElement('div'); 
+    div.className = `movie-item ${st}`;
+    div.innerHTML = `
+      <div class="movie-meta">
+        <div class="movie-title-row">
+          <span class="movie-title">${s.icon} ${s.name}</span>
+          <span class="${recClass}">${recLabel}</span>
+          <span class="tag-base movie-tag">${s.type}</span>
+        </div>
+        <div class="movie-sub" style="color: var(--gold-light); margin-top: 4px; font-weight: 600;">
+          ⚓ Best after Ep ${s.requiredEpisode}
+        </div>
+        ${s.note ? `<div class="movie-note" style="margin-top: 4px;">ℹ️ ${s.note}</div>` : ''}
+      </div>
+      <div class="movie-badge">${st === 'watched' ? '✅' : '📀'}</div>
+      <button class="movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}">
+        ${st==='watched' ? 'Unmark' : '✓ Watched'}
+      </button>
+    `;
+    div.querySelector('.movie-watch-btn').onclick = (e) => { e.stopPropagation(); toggleSpecialWatched(s); };
+    grid.appendChild(div);
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MAIN VIEW TOGGLE  (TV Series ↔ Movies)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Internal helper — show/hide the two sections and sync button state. */
+/** Internal helper — show/hide the sections, headers, and sync button state. */
 function _applyMainViewVisibility() {
-  const isSeries = state.mainView === 'series';
+  const v = state.mainView;
 
+  // Grids
   const ss = document.getElementById('seriesSection');
   const ms = document.getElementById('moviesSection');
-  if (ss) ss.style.display = isSeries ? '' : 'none';
-  if (ms) ms.style.display = isSeries ? 'none' : '';
+  const sp = document.getElementById('specialsSection');
+  // Headers
+  const sh = document.getElementById('seriesFilterHeader');
+  const mh = document.getElementById('moviesFilterHeader');
+  const sph = document.getElementById('specialsFilterHeader');
 
-  ['series', 'movies'].forEach(v => {
-    const btn = document.getElementById('viewbtn-' + v);
+  // Toggle UI
+  if (ss) ss.style.display   = (v === 'series') ? '' : 'none';
+  if (ms) ms.style.display   = (v === 'movies') ? '' : 'none';
+  if (sp) sp.style.display   = (v === 'specials') ? '' : 'none';
+  if (sh) sh.style.display   = (v === 'series') ? '' : 'none';
+  if (mh) mh.style.display   = (v === 'movies') ? '' : 'none';
+  if (sph) sph.style.display = (v === 'specials') ? '' : 'none';
+
+  // Update Main Toggle Buttons
+  ['series', 'movies', 'specials'].forEach(id => {
+    const btn = document.getElementById('viewbtn-' + id);
     if (!btn) return;
-    const isActive = v === state.mainView;
+    const isActive = (id === v);
     btn.classList.toggle('active', isActive);
     btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
   });
@@ -2646,10 +2780,11 @@ function setMainView(view) {
   state.mainView = view;
   saveState();
   _applyMainViewVisibility();
-  // Always refresh the movie grid when switching to it so lock states update
+  
   if (view === 'movies') renderMovieGrid();
+  if (view === 'specials') renderSpecialGrid(); 
+  if (view === 'all' || view === 'series') renderArcGrid();
 }
-
 /* ═══════════════════════════════════════════════════════════════════════════
    FILLER ARC ACTIONS
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -2813,6 +2948,7 @@ function commitEpisode() {
     renderStats();
     renderArcGrid();
     renderMovieGrid(); // re-evaluate lock states when episode changes
+    renderSpecialGrid();
   }
 }
 
@@ -2826,6 +2962,7 @@ function watchNextEp() {
     renderStats();
     renderArcGrid();
     renderMovieGrid(); // re-evaluate lock states when episode changes
+    renderSpecialGrid();
   }
 }
 
@@ -2839,6 +2976,7 @@ function adjustEp(delta) {
 function setView(v) {
   state.view = v;
   saveState();
+  setSpecialView(state.specialView);
 
   // Update toggle button states
   ['all', 'canon', 'filler', 'ongoing'].forEach(x => {
@@ -2858,6 +2996,7 @@ function handleSearch() {
   clearBtn.classList.toggle('visible', input.value.length > 0);
   renderArcGrid();
   renderMovieGrid();
+  renderSpecialGrid();
 }
 
 function clearSearch() {
@@ -2868,6 +3007,7 @@ function clearSearch() {
   input.focus();
   renderArcGrid();
   renderMovieGrid();
+  renderSpecialGrid();
 }
 
 function saveNotes() {
@@ -3289,6 +3429,7 @@ loadTheme();    // MUST run before renderAll so colours are correct on first pai
 loadState();
 renderAll();
 setView(state.view);            // syncs arc filter toggle aria-pressed
+setSpecialView(state.specialView);
 setMainView(state.mainView);    // syncs TV Series / Movies toggle + visibility
 
 /* ═══════════════════════════════════════════════════════════════════════════
