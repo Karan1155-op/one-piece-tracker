@@ -1262,6 +1262,18 @@
     }
 
     .movie-item.watched   .movie-badge { background: rgba(34, 176, 158, .2); }
+    /* ── Inline Timeline Locked State ── */
+    .movie-item.locked {
+      opacity: .5;
+      cursor: default;
+      border-color: rgba(255, 255, 255, .05);
+    }
+    .movie-item.locked .movie-title { color: var(--text-muted); }
+    .movie-item.locked .movie-badge { background: rgba(255, 255, 255, .05); }
+    .movie-item.locked .movie-watch-btn { display: none; /* Hides button if locked! */ }
+    
+    [data-theme="light"] .movie-item.locked { border-color: rgba(0, 0, 0, .05); opacity: .6; }
+
     .movie-item.unwatched .movie-badge { background: rgba(200, 144, 58, .1); }
 
     /* Light-mode movie overrides */
@@ -1275,7 +1287,7 @@
       .movie-item        { grid-template-columns: 1fr auto auto; }
       .movie-after       { display: none; }
       .movie-watch-btn   { padding: 6px 9px; font-size: 7px; }
-      .view-btn          { padding: 8px 12px; font-size: 9px; }
+      .view-btn          { padding: 7px 10px; font-size: 8px; }
     }
 
     /* ── Theme Toggle Button ──────────────────────────────────────────────── */
@@ -1724,8 +1736,9 @@
   </div>
 
   <div class="view-control">
-    <div class="view-pill" role="group" aria-label="Switch between views">
-      <button class="view-btn active" id="viewbtn-series"   onclick="setMainView('series')"   aria-pressed="true">📺 TV Series</button>
+    <div class="view-pill" role="group" aria-label="Switch between views" style="flex-wrap: wrap; justify-content: center;">
+      <button class="view-btn active" id="viewbtn-all"      onclick="setMainView('all')"      aria-pressed="true">🗺️ All</button>
+      <button class="view-btn"        id="viewbtn-series"   onclick="setMainView('series')"   aria-pressed="false">📺 TV Series</button>
       <button class="view-btn"        id="viewbtn-movies"   onclick="setMainView('movies')"   aria-pressed="false">🎬 Movies</button>
       <button class="view-btn"        id="viewbtn-specials" onclick="setMainView('specials')" aria-pressed="false">📀 Specials</button>
     </div>
@@ -1733,7 +1746,7 @@
 
   <div class="section-header" id="seriesFilterHeader">
     <h2>The Grand Line</h2>
-    <div class="toggle-pill" role="group" aria-label="Filter arcs by type">
+    <div class="toggle-pill" id="seriesFilters" role="group" aria-label="Filter arcs by type">
       <button class="toggle-option active-all"  id="toggle-all"     onclick="setView('all')"     aria-pressed="true">All</button>
       <button class="toggle-option"             id="toggle-canon"   onclick="setView('canon')"   aria-pressed="false">Canon</button>
       <button class="toggle-option"             id="toggle-filler"  onclick="setView('filler')"  aria-pressed="false">Filler</button>
@@ -2299,50 +2312,69 @@ function renderArcGrid() {
   const grid    = document.getElementById('arcGrid');
   const query   = state.searchQuery.toLowerCase().trim();
 
-  // ── Build the ordered list of items to display ─────────────────────────
-  const filtered = ARCS.filter(a => {
-    // Type filter
-    if (state.view === 'canon'   && a.type === 'filler')                  return false;
-    if (state.view === 'filler'  && a.type !== 'filler')                  return false;
-    if (state.view === 'ongoing' && !(a.eps[1] === null && a.type === 'canon')) return false;
-    // Search
-    if (query && !a.name.toLowerCase().includes(query)
-              && !a.saga.toLowerCase().includes(query))                   return false;
-    return true;
-  });
-
-  // ── Build a map of desired arc keys (in order) ─────────────────────────
-  // We interleave saga-divider keys and arc keys.
-  const desired = [];  // [{kind:'divider', saga}, {kind:'arc', arc}]
+  const desired = [];
   let lastSaga = '';
-  for (const a of filtered) {
-    if (a.saga !== lastSaga) {
-      desired.push({ kind: 'divider', saga: a.saga });
-      lastSaga = a.saga;
+  const placedMovies = new Set();
+  const placedSpecials = new Set();
+
+  for (const a of ARCS) {
+    const matchesView = (state.view === 'all') || 
+                        (state.view === 'canon' && a.type !== 'filler') ||
+                        (state.view === 'filler' && a.type === 'filler') ||
+                        (state.view === 'ongoing' && a.eps[1] === null && a.type === 'canon');
+    const matchesSearch = !query || a.name.toLowerCase().includes(query) || a.saga.toLowerCase().includes(query);
+
+    if (matchesView && matchesSearch) {
+      if (a.saga !== lastSaga) {
+        desired.push({ kind: 'divider', saga: a.saga });
+        lastSaga = a.saga;
+      }
+      desired.push({ kind: 'arc', data: a });
     }
-    desired.push({ kind: 'arc', arc: a });
+
+    // INJECT MOVIES & SPECIALS
+    if (state.mainView === 'all') {
+      const mediaToPlace = [];
+      
+      for (const m of MOVIES) {
+        if (!placedMovies.has(m.id) && m.requiredEpisode <= arcEnd(a)) {
+          placedMovies.add(m.id);
+          if (!query || m.name.toLowerCase().includes(query)) mediaToPlace.push({ kind: 'movie', data: m });
+        }
+      }
+      for (const s of SPECIALS) {
+        if (!placedSpecials.has(s.id) && s.requiredEpisode <= arcEnd(a)) {
+          placedSpecials.add(s.id);
+          if (!query || s.name.toLowerCase().includes(query)) mediaToPlace.push({ kind: 'special', data: s });
+        }
+      }
+      
+      mediaToPlace.sort((x, y) => x.data.requiredEpisode - y.data.requiredEpisode);
+      for (const item of mediaToPlace) {
+        if (a.saga !== lastSaga) {
+          desired.push({ kind: 'divider', saga: a.saga });
+          lastSaga = a.saga;
+        }
+        desired.push(item);
+      }
+    }
   }
 
-  // ── Reconcile live DOM ──────────────────────────────────────────────────
-  // Build a map of existing nodes by key
   const existingNodes = new Map();
   for (const child of Array.from(grid.children)) {
     const key = child.dataset.key;
     if (key) existingNodes.set(key, child);
   }
 
-  // We'll build the final ordered fragment, reusing existing nodes
   const fragment = document.createDocumentFragment();
 
   if (desired.length === 0) {
-    // No results — give it a stable key so the diffing loop can remove it
-    // when the search is cleared and results reappear.
     let msg = existingNodes.get('no-results');
     if (!msg) {
       msg = document.createElement('div');
       msg.className    = 'no-results';
       msg.dataset.key  = 'no-results';
-      msg.textContent  = '🌊 No arcs match your search.';
+      msg.textContent  = '🌊 No results match your search.';
     }
     existingNodes.delete('no-results');
     fragment.appendChild(msg);
@@ -2360,33 +2392,55 @@ function renderArcGrid() {
         existingNodes.delete(key);
         fragment.appendChild(node);
 
-      } else {
-        const a   = item.arc;
+      } else if (item.kind === 'arc') {
+        const a   = item.data;
         const key = 'arc-' + a.name.replace(/\s+/g, '-');
         let node  = existingNodes.get(key);
-
         const st = arcStatus(a, ep);
         const pg = arcProgress(a, ep);
 
-        if (!node) {
-          // ── Create new node ──────────────────────────────────────────────
-          node              = buildArcNode(a, st, pg, key);
-        } else {
-          // ── Patch existing node (only changed parts) ─────────────────────
-          patchArcNode(node, a, st, pg);
-        }
+        if (!node) { node = buildArcNode(a, st, pg, key); } 
+        else       { patchArcNode(node, a, st, pg); }
+        
+        existingNodes.delete(key);
+        fragment.appendChild(node);
+        
+      } else if (item.kind === 'movie') {
+        const m = item.data;
+        const key = 'movie-' + m.id;
+        let node = existingNodes.get(key);
+        
+        // NEW TIMELINE LOCK LOGIC
+        let st = 'unwatched';
+        if (ep < m.requiredEpisode) st = 'locked';
+        else if (state.watchedMovies.has(m.id)) st = 'watched';
+
+        if (!node) { node = buildMovieNodeInline(m, st, key); } 
+        else       { patchMovieNodeInline(node, m, st); }
+        
+        existingNodes.delete(key);
+        fragment.appendChild(node);
+        
+      } else if (item.kind === 'special') {
+        const s = item.data;
+        const key = 'special-' + s.id;
+        let node = existingNodes.get(key);
+        
+        // NEW TIMELINE LOCK LOGIC
+        let st = 'unwatched';
+        if (ep < s.requiredEpisode) st = 'locked';
+        else if (state.watchedSpecials.has(s.id)) st = 'watched';
+
+        if (!node) { node = buildSpecialNodeInline(s, st, key); } 
+        else       { patchSpecialNodeInline(node, s, st); }
+        
         existingNodes.delete(key);
         fragment.appendChild(node);
       }
     }
   }
 
-  // Remove nodes that are no longer in the desired set
-  for (const obsolete of existingNodes.values()) {
-    obsolete.remove();
-  }
-
-  // Append all desired nodes in order (this is a single DOM operation)
+  for (const obsolete of existingNodes.values()) obsolete.remove();
   grid.appendChild(fragment);
 }
 
@@ -2407,6 +2461,10 @@ function buildArcNode(a, st, pg, key) {
   const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : (a.eps[1] === null && a.type === 'canon') ? `Episodes ${a.eps[0]}–${arcEnd(a)} (ongoing)` : a.eps[1] === null ? `Episodes ${a.eps[0]}+ (est.)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
   const noteClass  = a.type === 'upcoming' ? 'arc-note note-blue' : 'arc-note';
   const pctLabel   = a.type === 'upcoming' ? 'Soon' : pg + '%';
+  // NEW: Hide progress bar for skipped/unmarked fillers unless currently watching
+  const isWatchedFiller = a.type === 'filler' && state.watchedFillers.has(a.name);
+  const hideProgress = a.type === 'filler' && st !== 'current' && !isWatchedFiller;
+  const progStyle = hideProgress ? 'style="display: none;"' : '';
 
   node.innerHTML = `
     <div class="arc-meta">
@@ -2418,7 +2476,7 @@ function buildArcNode(a, st, pg, key) {
       <div class="arc-saga">${a.saga.endsWith('Saga') ? a.saga : a.saga + ' Saga'}</div>
       ${a.note ? `<div class="${noteClass}">ℹ️ ${a.note}</div>` : ''}
     </div>
-    <div class="arc-progress-mini">
+    <div class="arc-progress-mini" ${progStyle}>
       <div class="arc-bar">
         <div class="arc-bar-fill" style="width: ${pg}%"></div>
       </div>
@@ -2487,7 +2545,7 @@ function updateFillerButtons(node, a) {
     // Watched → Unwatch only (no episode reversal)
     btnA.className     = 'btn-filler-action action-unwatch';
     btnA.style.display = 'inline-flex';
-    btnA.textContent   = '↩ Unwatch';
+    btnA.textContent   = 'Unmark';
     btnA.onclick = (e) => { e.stopPropagation(); unwatchFillerArc(a); };
 
   } else if (!hasStarted) {
@@ -2520,6 +2578,14 @@ function patchArcNode(node, a, st, pg) {
              : st === 'unlocked'  ? `${base} unlocked`
              :                      `${base} locked`;
   if (node.className !== cls) node.className = cls;
+
+  // NEW: Hide/show filler progress bar dynamically when patching
+  const isWatchedFiller = a.type === 'filler' && state.watchedFillers.has(a.name);
+  const hideProgress = a.type === 'filler' && st !== 'current' && !isWatchedFiller;
+  const progMini = node.querySelector('.arc-progress-mini');
+  if (progMini) {
+    progMini.style.display = hideProgress ? 'none' : '';
+  }
 
   // Progress bar width
   const fill = node.querySelector('.arc-bar-fill');
@@ -2570,6 +2636,102 @@ function attachArcClick(node, a) {
   });
 }
 
+/** Build a movie node for the inline Timeline view. */
+function buildMovieNodeInline(m, st, key) {
+  const div = document.createElement('div');
+  div.dataset.key = key;
+  div.className = `movie-item ${st}`;
+
+  const recLabel = m.rec === 'high' ? '⭐ Highly Recommended' : m.rec === 'watch' ? '👍 Worth Watching' : '⏭ Skip/Recap';
+  const recClass = 'tag-base ' + (m.rec === 'high' ? 'rec-high' : m.rec === 'watch' ? 'rec-watch' : 'rec-skip');
+  
+  const isLocked = st === 'locked';
+  const badgeIcon = isLocked ? '🔒' : (st === 'watched' ? '✅' : '🎬');
+  const epLabel = isLocked ? `🔒 Unlocks at Ep ${m.requiredEpisode}` : `⚓ Best after Ep ${m.requiredEpisode}`;
+
+  div.innerHTML = `
+    <div class="movie-meta">
+      <div class="movie-title-row">
+        <span class="movie-title">${m.icon} ${m.name}</span>
+        <span class="${recClass}">${recLabel}</span>
+      </div>
+      <div class="movie-sub" style="color: var(--gold-light); margin-top: 4px; font-weight: 600;">${epLabel}</div>
+      ${m.note ? `<div class="movie-note" style="margin-top: 4px;">ℹ️ ${m.note}</div>` : ''}
+    </div>
+    <div class="movie-badge">${badgeIcon}</div>
+    <button class="movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}">${st==='watched' ? 'Unmark' : '✓ Watched'}</button>
+  `;
+  div.querySelector('.movie-watch-btn').onclick = (e) => { e.stopPropagation(); toggleMovieWatched(m); };
+  return div;
+}
+
+function patchMovieNodeInline(node, m, st) {
+  const cls = `movie-item ${st}`;
+  if (node.className !== cls) node.className = cls;
+  
+  const isLocked = st === 'locked';
+  const badge = node.querySelector('.movie-badge');
+  if (badge) badge.textContent = isLocked ? '🔒' : (st === 'watched' ? '✅' : '🎬');
+  
+  const sub = node.querySelector('.movie-sub');
+  if (sub) sub.textContent = isLocked ? `🔒 Unlocks at Ep ${m.requiredEpisode}` : `⚓ Best after Ep ${m.requiredEpisode}`;
+
+  const btn = node.querySelector('.movie-watch-btn');
+  if (btn) {
+      btn.className = `movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}`;
+      btn.textContent = st === 'watched' ? 'Unmark' : '✓ Watched';
+  }
+}
+
+/** Build a special node for the inline Timeline view. */
+function buildSpecialNodeInline(s, st, key) {
+  const div = document.createElement('div');
+  div.dataset.key = key;
+  div.className = `movie-item ${st}`;
+
+  const recLabel = s.rec === 'high' ? '⭐ Highly Recommended' : s.rec === 'watch' ? '👍 Worth Watching' : '⏭ Skip/Recap';
+  const recClass = 'tag-base ' + (s.rec === 'high' ? 'rec-high' : s.rec === 'watch' ? 'rec-watch' : 'rec-skip');
+  
+  const isLocked = st === 'locked';
+  const badgeIcon = isLocked ? '🔒' : (st === 'watched' ? '✅' : '📀');
+  const epLabel = isLocked ? `🔒 Unlocks at Ep ${s.requiredEpisode}` : `⚓ Best after Ep ${s.requiredEpisode}`;
+
+  div.innerHTML = `
+    <div class="movie-meta">
+      <div class="movie-title-row">
+        <span class="movie-title">${s.icon} ${s.name}</span>
+        <span class="${recClass}">${recLabel}</span>
+        <span class="tag-base movie-tag">${s.type}</span>
+      </div>
+      <div class="movie-sub" style="color: var(--gold-light); margin-top: 4px; font-weight: 600;">${epLabel}</div>
+      ${s.note ? `<div class="movie-note" style="margin-top: 4px;">ℹ️ ${s.note}</div>` : ''}
+    </div>
+    <div class="movie-badge">${badgeIcon}</div>
+    <button class="movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}">${st==='watched' ? 'Unmark' : '✓ Watched'}</button>
+  `;
+  // FIXED: Always attach the click powers! 
+  div.querySelector('.movie-watch-btn').onclick = (e) => { e.stopPropagation(); toggleSpecialWatched(s); };
+  return div;
+}
+
+function patchSpecialNodeInline(node, s, st) {
+  const cls = `movie-item ${st}`;
+  if (node.className !== cls) node.className = cls;
+  
+  const isLocked = st === 'locked';
+  const badge = node.querySelector('.movie-badge');
+  if (badge) badge.textContent = isLocked ? '🔒' : (st === 'watched' ? '✅' : '📀');
+  
+  const sub = node.querySelector('.movie-sub');
+  if (sub) sub.textContent = isLocked ? `🔒 Unlocks at Ep ${s.requiredEpisode}` : `⚓ Best after Ep ${s.requiredEpisode}`;
+
+  const btn = node.querySelector('.movie-watch-btn');
+  if (btn) {
+      btn.className = `movie-watch-btn ${st==='watched' ? 'btn-unmark' : 'btn-mark'}`;
+      btn.textContent = st === 'watched' ? 'Unmark' : '✓ Watched';
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIE GRID
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -2599,6 +2761,7 @@ function toggleMovieWatched(movie) {
   }
   saveState();
   renderMovieGrid();
+  if (state.mainView === 'all') renderArcGrid();
   renderStats();
 }
 
@@ -2688,6 +2851,7 @@ function toggleSpecialWatched(special) {
     showToast(`📀 ${special.name} — Watched!`, '');
   }
   saveState();
+  if (state.mainView === 'all') renderArcGrid();
   renderSpecialGrid();
 }
 
@@ -2746,27 +2910,38 @@ function renderSpecialGrid() {
 
 /** Internal helper — show/hide the sections, headers, and sync button state. */
 function _applyMainViewVisibility() {
-  const v = state.mainView;
+  const v = state.mainView || 'all'; 
+  state.mainView = v; 
 
-  // Grids
   const ss = document.getElementById('seriesSection');
   const ms = document.getElementById('moviesSection');
   const sp = document.getElementById('specialsSection');
-  // Headers
   const sh = document.getElementById('seriesFilterHeader');
+  const sf = document.getElementById('seriesFilters'); // <-- NEW
   const mh = document.getElementById('moviesFilterHeader');
   const sph = document.getElementById('specialsFilterHeader');
+  const legend = document.querySelector('.legend');
+  const searchInput = document.getElementById('arcSearch');
 
-  // Toggle UI
-  if (ss) ss.style.display   = (v === 'series') ? '' : 'none';
+  if (ss) ss.style.display   = (v === 'series' || v === 'all') ? '' : 'none';
   if (ms) ms.style.display   = (v === 'movies') ? '' : 'none';
   if (sp) sp.style.display   = (v === 'specials') ? '' : 'none';
-  if (sh) sh.style.display   = (v === 'series') ? '' : 'none';
+  
+  if (sh) sh.style.display   = (v === 'series' || v === 'all') ? '' : 'none';
+  if (sf) sf.style.display   = (v === 'series') ? 'flex' : 'none'; // Only shows on 'series' tab!
   if (mh) mh.style.display   = (v === 'movies') ? '' : 'none';
   if (sph) sph.style.display = (v === 'specials') ? '' : 'none';
 
-  // Update Main Toggle Buttons
-  ['series', 'movies', 'specials'].forEach(id => {
+  if (legend) legend.style.display = (v === 'series' || v === 'all') ? 'flex' : 'none';
+
+  if (searchInput) {
+    if (v === 'all') searchInput.placeholder = 'Search timeline...';
+    else if (v === 'series') searchInput.placeholder = 'Search arcs...';
+    else if (v === 'movies') searchInput.placeholder = 'Search movies...';
+    else if (v === 'specials') searchInput.placeholder = 'Search specials...';
+  }
+
+  ['all', 'series', 'movies', 'specials'].forEach(id => {
     const btn = document.getElementById('viewbtn-' + id);
     if (!btn) return;
     const isActive = (id === v);
@@ -2775,7 +2950,6 @@ function _applyMainViewVisibility() {
   });
 }
 
-/** Called from HTML onclick — switches main view and re-renders if needed. */
 function setMainView(view) {
   state.mainView = view;
   saveState();
@@ -2785,6 +2959,7 @@ function setMainView(view) {
   if (view === 'specials') renderSpecialGrid(); 
   if (view === 'all' || view === 'series') renderArcGrid();
 }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    FILLER ARC ACTIONS
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -3070,13 +3245,17 @@ document.addEventListener('keydown', e => {
  */
 function exportSave() {
   const payload = {
-    version:       3,
+    version:       5,
     exportedAt:    new Date().toISOString(),
     episode:       state.episode,
     notes:         state.notes,
     view:          state.view,
     mainView:      state.mainView,
     watchedMovies: Array.from(state.watchedMovies),
+    watchedFillers: Array.from(state.watchedFillers),
+    skippedFillers: Array.from(state.skippedFillers),
+    watchedSpecials:Array.from(state.watchedSpecials),
+    specialView:   state.specialView,
   };
 
   const json = JSON.stringify(payload, null, 2);
@@ -3148,15 +3327,16 @@ document.getElementById('importInput').addEventListener('change', function () {
       return;
     }
 
-    // Apply the imported values to state, falling back to current values for
-    // any optional fields that might be absent in older export versions.
+    // Apply the imported values to state, falling back to current values
     state.episode       = parsed.episode;
     state.notes         = typeof parsed.notes === 'string' ? parsed.notes : state.notes;
     state.view          = ['all', 'canon', 'filler', 'ongoing'].includes(parsed.view) ? parsed.view : 'all';
-    state.mainView      = parsed.mainView === 'movies' ? 'movies' : 'series';
+    state.mainView      = ['series', 'movies', 'specials', 'all'].includes(parsed.mainView) ? parsed.mainView : 'series';
     state.watchedMovies  = new Set(Array.isArray(parsed.watchedMovies)  ? parsed.watchedMovies  : []);
     state.watchedFillers = new Set(Array.isArray(parsed.watchedFillers) ? parsed.watchedFillers : []);
     state.skippedFillers = new Set(Array.isArray(parsed.skippedFillers) ? parsed.skippedFillers : []);
+    state.watchedSpecials= new Set(Array.isArray(parsed.watchedSpecials)? parsed.watchedSpecials: []);
+    state.specialView    = parsed.specialView || 'all';
     state.searchQuery   = '';
 
     saveState();
@@ -3513,7 +3693,6 @@ document.addEventListener('visibilitychange', () => {
     bgm.pause();
   } else {
     if (!isMuted) {
-      bgm.src = 'assets/music_track.mp3';
       bgm.play().then(() => {
         bgm.volume = 0;
         let fade = setInterval(() => {
@@ -3563,7 +3742,19 @@ fetchTotalEpisodes();
                 // A new version is cached and waiting — surface it via the
                 // existing showToast() helper if it is already defined.
                 if (typeof showToast === 'function') {
-                  showToast('🆕 Update ready — reload to apply', '');
+                  showToast('🆕 Update ready! Click here to apply.', 'elbaf');
+                  
+                  // Grab the toast element and stop it from fading away!
+                  const t = document.getElementById('toast');
+                  clearTimeout(toastTimer); 
+                  
+                  // Make it clickable so it reloads the app
+                  t.style.pointerEvents = 'auto'; 
+                  t.style.cursor = 'pointer';
+                  t.onclick = () => {
+                    newWorker.postMessage({ action: 'skipWaiting' });
+                    setTimeout(() => window.location.reload(), 300);
+                  };
                 }
               }
             });
