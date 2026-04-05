@@ -1530,6 +1530,13 @@
       }
     }
 
+
+    /* ── Specials filter active states ───────────────────────────────────── */
+    .toggle-option.active-sp-all     { background: linear-gradient(135deg, var(--gold-dim), var(--amber)); color: var(--white); }
+    .toggle-option.active-sp-special { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
+    .toggle-option.active-sp-ova     { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
+    .toggle-option.active-sp-short   { background: linear-gradient(135deg, #16a34a, #22c55e); color: var(--white); }
+
     /* ── Responsive ────────────────────────────────────────────────────────── */
     @media (max-width: 500px) {
       .stats-row {
@@ -1626,15 +1633,15 @@
   </header>
 
   <!-- ── Elbaf Banner (live countdown) ───────────────────────────────────── -->
-  <div class="elbaf-banner" role="region" aria-label="Elbaf arc announcement">
+ <div class="elbaf-banner" role="region" aria-label="Elbaf arc announcement">
     <div class="elbaf-banner-icon" aria-hidden="true">🏔️</div>
     <div class="elbaf-banner-text">
-      <div class="elbaf-banner-title">⚡ Elbaf Arc Incoming</div>
-      <div class="elbaf-banner-sub">The land of giants awaits — Ep 1156 · Final Saga Arc 2</div>
+      <div class="elbaf-banner-title">⚡ Elbaf Arc Ongoing</div>
+      <div class="elbaf-banner-sub">The land of giants is here — Final Saga Arc 2</div>
     </div>
-    <div class="elbaf-countdown" id="elbafCountdown" aria-live="polite" aria-label="Countdown to Elbaf arc">
-      <span id="cdValue">…</span>
-      <span class="cd-label" id="cdLabel">loading</span>
+    <div class="elbaf-countdown" id="elbafCountdown" aria-label="Elbaf arc status">
+      <span id="cdValue" style="font-size: 11px;">🏔️ Now Airing</span>
+      <span class="cd-label" id="cdLabel">Ep 1156+</span>
     </div>
   </div>
 
@@ -1952,8 +1959,8 @@ const ARCS = [
   { name: 'Wano Country',       saga: 'Wano',              eps: [890,  1085], icon: '⛩️',  type: 'canon',   note: 'Ep 907 filler; eps 1029–1030 filler; ep 1084 anime-original' },
 
   // ── Final Saga ────────────────────────────────────────────────────────────
-  { name: 'Egghead',            saga: 'Final Saga',        eps: [1086, 1155], icon: '🤖',  type: 'canon',   note: 'Concluded Dec 28 2025 · Ep 1155 — "Off to the Long-Awaited Elbaph"' },
-  { name: 'Elbaf',              saga: 'Final Saga',        eps: [1156, null], icon: '🏔️',  type: 'upcoming', note: '⚡ Begins April 5 2026 · Land of Giants · Final Saga Arc 2' },
+  { name: 'Egghead',            saga: 'Final Saga',        eps: [1086, 1155], icon: '🤖',  type: 'canon',   },
+  { name: 'Elbaf',              saga: 'Final Saga',        eps: [1156, null], icon: '🏔️',  type: 'canon',   note: 'The Long Awaited Elbaph · Land of Giants · Final saga Arc 2' },
 ];
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2013,7 +2020,7 @@ const SPECIALS = [
    STATE
    ═══════════════════════════════════════════════════════════════════════════ */
 const ELBAF_DATE     = new Date('2026-04-05T07:15:00-07:00'); // JST premiere
-const FALLBACK_TOTAL = 1155;  // used until API responds
+const FALLBACK_TOTAL = 1168;  // used until API responds
 
 const state = {
   episode:        0,
@@ -2155,7 +2162,7 @@ function setFetchStatus(msg, cls) {
    ═══════════════════════════════════════════════════════════════════════════ */
 function getCurrentArc(ep) {
   for (const a of ARCS) {
-    if (ep >= a.eps[0] && ep <= a.eps[1]) return a;
+    if (ep >= a.eps[0] && ep <= arcEnd(a)) return a;  // arcEnd handles null (Elbaf)
   }
   if (ep === 0) return null;
   for (const a of ARCS) {
@@ -2176,7 +2183,8 @@ function arcEnd(a) {
 
 function arcStatus(a, ep) {
   if (a.type === 'upcoming') return 'locked';
-  if (ep >= arcEnd(a))       return 'completed';
+  // Check if it's ongoing (eps[1] is null). If so, it's never "completed"!
+  if (a.eps[1] !== null && ep >= arcEnd(a)) return 'completed';
   if (ep >= a.eps[0])        return 'current';
 
   // Unlocked: previous arc is completed so this one is accessible at 0%
@@ -2196,7 +2204,12 @@ function arcProgress(a, ep) {
 }
 
 function computeMilestones(oldEp, newEp) {
-  return ARCS.filter(a => a.type !== 'upcoming' && newEp >= arcEnd(a) && oldEp < arcEnd(a));
+  // Exclude ongoing arcs (eps[1] === null) — they never "complete"
+  return ARCS.filter(a =>
+    a.type !== 'upcoming' &&
+    a.eps[1] !== null &&
+    newEp >= arcEnd(a) && oldEp < arcEnd(a)
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2246,6 +2259,7 @@ function renderAll() {
 function updateTotalDependentUI() {
   renderHero();
   renderStats();
+  renderArcGrid();
   // Update input max attribute
   document.getElementById('epInput').max = state.totalEps;
 }
@@ -2458,7 +2472,15 @@ function buildArcNode(a, st, pg, key) {
     a.movie               ? `<span class="tag-base movie-tag">🎬 ${a.movie}</span>`       : '',
   ].join('');
 
-  const epsLabel   = a.type === 'upcoming' ? `Episodes ${a.eps[0]}+ (est.)` : (a.eps[1] === null && a.type === 'canon') ? `Episodes ${a.eps[0]}–${arcEnd(a)} (ongoing)` : a.eps[1] === null ? `Episodes ${a.eps[0]}+ (est.)` : `Episodes ${a.eps[0]}–${a.eps[1]}`;
+  let epsLabel = '';
+  if (a.type === 'upcoming') {
+    epsLabel = `Episodes ${a.eps[0]}+ (est.)`;
+  } else if (a.eps[1] === null) {
+    const endEp = arcEnd(a);
+    epsLabel = endEp > a.eps[0] ? `Episodes ${a.eps[0]}–${endEp} (ongoing)` : `Episode ${a.eps[0]} (ongoing)`;
+  } else {
+    epsLabel = `Episodes ${a.eps[0]}–${a.eps[1]}`;
+  }
   const noteClass  = a.type === 'upcoming' ? 'arc-note note-blue' : 'arc-note';
   const pctLabel   = a.type === 'upcoming' ? 'Soon' : pg + '%';
   // NEW: Hide progress bar for skipped/unmarked fillers unless currently watching
@@ -2578,7 +2600,20 @@ function patchArcNode(node, a, st, pg) {
              : st === 'unlocked'  ? `${base} unlocked`
              :                      `${base} locked`;
   if (node.className !== cls) node.className = cls;
-
+  // NEW: Update the Episode Range text dynamically!
+  const epsEl = node.querySelector('.arc-eps');
+  if (epsEl) {
+    let epsLabel = '';
+    if (a.type === 'upcoming') {
+      epsLabel = `Episodes ${a.eps[0]}+ (est.)`;
+    } else if (a.eps[1] === null) {
+      const endEp = arcEnd(a);
+      epsLabel = endEp > a.eps[0] ? `Episodes ${a.eps[0]}–${endEp} (ongoing)` : `Episode ${a.eps[0]} (ongoing)`;
+    } else {
+      epsLabel = `Episodes ${a.eps[0]}–${a.eps[1]}`;
+    }
+    if (epsEl.textContent !== epsLabel) epsEl.textContent = epsLabel;
+  }
   // NEW: Hide/show filler progress bar dynamically when patching
   const isWatchedFiller = a.type === 'filler' && state.watchedFillers.has(a.name);
   const hideProgress = a.type === 'filler' && st !== 'current' && !isWatchedFiller;
@@ -2626,12 +2661,24 @@ function attachArcClick(node, a) {
     const st = arcStatus(a, state.episode);
     if (st === 'locked') return;
     const f = a.type === 'filler';
+    
+    // NEW: Smart text for the toast notifications!
+    const endEp = arcEnd(a);
+    const epRange = a.eps[1] === null 
+      ? (endEp > a.eps[0] ? `Ep ${a.eps[0]}–${endEp} (ongoing)` : `Ep ${a.eps[0]} (ongoing)`)
+      : `Ep ${a.eps[0]}–${endEp}`;
+
     if (st === 'completed') {
       showToast(`${f ? '🟣' : '✅'} ${a.name} — Completed!`, f ? 'filler' : '');
     } else if (st === 'unlocked') {
-      showToast(`🔓 ${a.name} unlocked — Ep ${a.eps[0]}–${arcEnd(a)}`, f ? 'filler' : '');
+      showToast(`🔓 ${a.name} unlocked — ${epRange}`, f ? 'filler' : '');
     } else {
-      showToast(`⚡ Now in: ${a.name} (${a.eps[0]}–${arcEnd(a)})`, '');
+      // If it's an ongoing arc AND you are completely caught up
+      if (a.eps[1] === null && state.episode >= state.totalEps) {
+        showToast(`⏳ ${a.name} — Next episode soon!`, 'elbaf');
+      } else {
+        showToast(`⚡ Now in: ${a.name} (${epRange})`, '');
+      }
     }
   });
 }
@@ -3107,7 +3154,7 @@ function notifyAfterSet(result) {
 }
 
 function notifyAtMax() {
-  showToast('🏔️ Caught up! Elbaf begins April 5, 2026', 'elbaf');
+  showToast('🏔️ Caught up! Next episode airing soon!', 'elbaf');
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -3210,14 +3257,16 @@ function confirmReset() {
   state.view           = 'all';
   state.mainView       = 'series';
   state.searchQuery    = '';
-  state.watchedMovies  = new Set();
-  state.watchedFillers = new Set();
-  state.skippedFillers = new Set();
+  state.watchedMovies   = new Set();
+  state.watchedFillers  = new Set();
+  state.skippedFillers  = new Set();
+  state.watchedSpecials = new Set();
+  state.specialView     = 'all';
   closeResetDialog();
   clearSearch();
   setView('all');
   renderAll();
-  setMainView('series');
+  setMainView('all');
   showToast('⚓ Journey reset — Romance Dawn awaits!', '');
 }
 
