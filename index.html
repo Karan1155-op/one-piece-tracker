@@ -1536,6 +1536,51 @@
     .toggle-option.active-sp-special { background: linear-gradient(135deg, var(--teal), var(--teal-light)); color: var(--white); }
     .toggle-option.active-sp-ova     { background: linear-gradient(135deg, var(--purple), var(--purple-light)); color: var(--white); }
     .toggle-option.active-sp-short   { background: linear-gradient(135deg, #16a34a, #22c55e); color: var(--white); }
+    /* ── Info Toggle Button & Glow ─────────────────────────────────────────── */
+    .info-toggle {
+      position: absolute;
+      top: 62px;
+      right: 0;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'DM Mono', monospace;
+      font-weight: bold;
+      font-size: 18px;
+      color: var(--cyan);
+      z-index: 10;
+      transition: all 0.3s ease;
+    }
+
+    .notes-card .info-toggle {
+      position: static;
+      width: 30px;
+      height: 30px;
+      font-size: 14px;
+    }
+
+    .info-toggle.glow {
+      box-shadow: 0 0 0 0 rgba(0, 229, 212, 0.7);
+      animation: pulse-cyan 2s infinite;
+      border-color: var(--cyan);
+    }
+
+    @keyframes pulse-cyan {
+      0% { box-shadow: 0 0 0 0 rgba(0, 229, 212, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 229, 212, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 229, 212, 0); }
+    }
+
+    .info-toggle:hover {
+      background: var(--cyan-glow);
+      transform: scale(1.1);
+    }
 
     /* ── Responsive ────────────────────────────────────────────────────────── */
     @media (max-width: 500px) {
@@ -1619,6 +1664,10 @@
       aria-label="Switch to light mode"
       title="Toggle theme"
     >🌙</button>
+
+    <div id="infoButtonHeaderContainer">
+      <button class="info-toggle glow" id="infoToggle" aria-label="View Updates">i</button>
+    </div>
 
     <button
       class="mute-toggle"
@@ -1812,7 +1861,10 @@
 
   <!-- ── Captain's Log ────────────────────────────────────────────────────── -->
   <div class="notes-card">
-    <h3>📓 Captain's Log</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+      <h3 style="margin-bottom: 0;">📓 Captain's Log</h3>
+      <div id="infoButtonLogContainer"></div>
+    </div>
     <label for="notes" class="sr-only">Captain's log — personal notes</label>
     <textarea
       id="notes"
@@ -1866,6 +1918,71 @@
 </div><!-- /.app -->
 
 <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
+
+<div class="dialog-backdrop" id="infoModal">
+  <div class="dialog" style="max-width: 450px; text-align: left;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="margin-bottom: 0;">🚀 Ship Updates</h3>
+    </div>
+
+    <div style="font-size: 13px; color: var(--text); line-height: 1.6; max-height: 450px; overflow-y: auto; padding-right: 10px;">
+      <p style="margin-bottom: 15px; color: var(--gold-light);"><i>Note: Don't worry, this button will be moved down to the Captain's Log once you have read it.</i></p>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(61, 143, 255, 0.2); padding-bottom: 5px;">
+        <b style="color: var(--elbaf-light); font-size: 14px;">The Roadmap</b>
+        <b style="color: var(--cyan); font-size: 14px;">Upcoming Version (v1.2)</b>
+        <span class="tag-base upcoming-tag">Upcoming</span>
+      </div>
+
+      <b style="color: var(--white);">🏔️ Elbaf Era Ready</b>
+      <ul style="margin-left: 20px; margin-bottom: 10px;">
+        <li>Once Part 1 of Elbaf ends, Part 2 will be added just below it in the Final Saga.</li>
+      </ul>
+
+      <b style="color: var(--white);">🎨 UI/UX Refit</b>
+      <ul style="margin-left: 20px; margin-bottom: 25px;">
+        <li>Applying the new "Neo-Ocean" design language across all sections.</li>
+        <li>Optimizing Dark and Light mode support with better contrast variables.</li>
+      </ul>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1px solid rgba(0, 229, 212, 0.2); padding-bottom: 5px;">
+        <b style="color: var(--cyan); font-size: 14px;">Current Version (v1.1)</b>
+        <span class="tag-base ongoing-tag">Applied</span>
+      </div>
+
+      <b style="color: var(--white);">🔮 Features</b>
+      <ul style="margin-left: 20px; margin-bottom: 10px;">
+        <li>Added a new Info button so you can easily track recent updates and fixes.</li>
+      </ul>
+
+      <b style="color: var(--white);">🛠️ Bug Fixes (The Great Patch)</b>
+      <ul style="margin-left: 20px; margin-bottom: 20px;">
+        <li>Fixed: Elbaf is now correctly recognized as the "Current Arc" in the Arc section.</li>
+        <li>Fixed: Removed false "Arc Complete" toasts for ongoing arcs.</li>
+        <li>Fixed: Reset Journey will now work properly for Specials and OVAs too.</li>
+        <li>Fixed: Countdown engine refresh issues solved.</li>
+        <li>Fixed: Specials filter buttons highlight logic corrected.</li>
+      </ul>
+
+      <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+        <b style="color: var(--gold-light); font-size: 13px;">💬 Feedback & Suggestions</b>
+        <p style="margin-top: 6px; margin-bottom: 12px; font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+          Have an idea, feedback, or found a bug? Let me know in the comments on my Reddit post! Since I am an individual developer and not a whole team, I'll try my absolute best to apply suggestions and fix issues if possible.
+        </p>
+        <a href="https://www.reddit.com/r/OnePiece/comments/1s1ga6n/stop_googling_one_piece_watch_order_and_getting/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost" style="display: inline-flex; align-items: center; gap: 6px; text-decoration: none; padding: 6px 12px; font-size: 10px;">
+          <span style="font-size: 14px;">📢</span> Comment on Reddit
+        </a>
+      </div>
+
+    </div>
+    
+    <div class="dialog-actions" style="margin-top: 20px;">
+      <button class="btn btn-primary" onclick="closeInfoModal()">Acknowledge</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- ── Reset Confirmation Dialog ──────────────────────────────────────────── -->
@@ -3652,6 +3769,48 @@ function fallbackDownload(blob, filename) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
+   INFO BUTTON LOGIC
+   ═══════════════════════════════════════════════════════════════════════════ */
+const UPDATE_VERSION = '1.1';
+
+function initInfoButton() {
+  const infoBtn = document.getElementById('infoToggle');
+  const hasReadUpdate = localStorage.getItem('op_update_read') === UPDATE_VERSION;
+
+  if (hasReadUpdate) {
+    moveButtonToLog();
+    infoBtn.classList.remove('glow');
+  }
+
+  infoBtn.addEventListener('click', openInfoModal);
+}
+
+function openInfoModal() {
+  document.getElementById('infoModal').classList.add('open');
+}
+
+function closeInfoModal() {
+  document.getElementById('infoModal').classList.remove('open');
+  
+  const infoBtn = document.getElementById('infoToggle');
+  
+  if (localStorage.getItem('op_update_read') !== UPDATE_VERSION) {
+    localStorage.setItem('op_update_read', UPDATE_VERSION);
+    infoBtn.classList.remove('glow');
+    moveButtonToLog();
+    showToast('⚓ Updates acknowledged. Button moved to Captain\'s Log.', '');
+  }
+}
+
+function moveButtonToLog() {
+  const infoBtn = document.getElementById('infoToggle');
+  const logContainer = document.getElementById('infoButtonLogContainer');
+  if (logContainer && infoBtn) {
+    logContainer.appendChild(infoBtn);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
    BOOT
    ═══════════════════════════════════════════════════════════════════════════ */
 loadTheme();    // MUST run before renderAll so colours are correct on first paint
@@ -3660,6 +3819,7 @@ renderAll();
 setView(state.view);            // syncs arc filter toggle aria-pressed
 setSpecialView(state.specialView);
 setMainView(state.mainView);    // syncs TV Series / Movies toggle + visibility
+initInfoButton();
 
 /* ═══════════════════════════════════════════════════════════════════════════
    BACKGROUND MUSIC
