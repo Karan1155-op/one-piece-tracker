@@ -4,6 +4,33 @@
    MUSIC COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 export let isMuted = localStorage.getItem('op_muted') === 'true';
+let fadeTimer = null;
+let startTimer = null;
+
+function clearAudioTimers() {
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+  if (startTimer) { clearTimeout(startTimer); startTimer = null; }
+}
+
+function fadeToDefaultVolume(bgm) {
+  clearAudioTimers();
+  fadeTimer = setInterval(() => {
+    if (bgm.volume < 0.4) {
+      bgm.volume = Math.min(bgm.volume + 0.05, 0.4);
+    } else {
+      clearInterval(fadeTimer);
+      fadeTimer = null;
+    }
+  }, 200);
+}
+
+function hardPauseBgm(resetPosition = false) {
+  const bgm = document.getElementById('bgm');
+  if (!bgm) return;
+  clearAudioTimers();
+  bgm.pause();
+  if (resetPosition) bgm.currentTime = 0;
+}
 
 // Set the initial icon when the page loads
 export function toggleMute() {
@@ -12,12 +39,15 @@ export function toggleMute() {
   const bgm = document.getElementById('bgm');
 
   if (isMuted) {
-    bgm.pause();
+    hardPauseBgm();
   } else {
     if (!bgm.src || bgm.src.endsWith('null') || bgm.src === '') {
       bgm.src = 'assets/music_track.mp3';
     }
-    bgm.play().catch(() => {});
+    bgm.play().then(() => {
+      bgm.volume = 0;
+      fadeToDefaultVolume(bgm);
+    }).catch(() => {});
   }
 
   // Sync sidebar mute toggle
@@ -38,27 +68,15 @@ export function startMusic() {
   bgm.volume = 0; // Start silent for the fade-in effect
 
   // Wait 3 seconds before trying to play
-  setTimeout(() => {
+  startTimer = setTimeout(() => {
     bgm.play().then(() => {
-      // Fade in smoothly to 40% volume (0.4)
-      let fade = setInterval(() => {
-        if (bgm.volume < 0.4) {
-          bgm.volume = Math.min(bgm.volume + 0.05, 0.4);
-        } else {
-          clearInterval(fade);
-        }
-      }, 200);
+      fadeToDefaultVolume(bgm);
     }).catch(() => {
       // Autoplay blocked by browser. Wait for the user's first tap/click to play.
       const playOnTap = () => {
         bgm.play().then(() => {
-          let fade = setInterval(() => {
-            if (bgm.volume < 0.4) {
-              bgm.volume = Math.min(bgm.volume + 0.05, 0.4);
-            } else {
-              clearInterval(fade);
-            }
-          }, 200);
+          bgm.volume = 0;
+          fadeToDefaultVolume(bgm);
         });
         document.removeEventListener('click', playOnTap);
         document.removeEventListener('touchstart', playOnTap);
@@ -71,23 +89,15 @@ export function startMusic() {
 
 window.addEventListener('load', startMusic);
 
-// Pause music when app is minimized, resume when opened
+// Pause music when app is minimized/hidden (no auto-resume)
 document.addEventListener('visibilitychange', () => {
-  const bgm = document.getElementById('bgm');
   if (document.hidden) {
-    bgm.pause();
-  } else {
-    if (!isMuted) {
-      bgm.play().then(() => {
-        bgm.volume = 0;
-        let fade = setInterval(() => {
-          if (bgm.volume < 0.4) {
-            bgm.volume = Math.min(bgm.volume + 0.05, 0.4);
-          } else {
-            clearInterval(fade);
-          }
-        }, 200);
-      }).catch(() => {});
-    }
+    // Do not auto-resume after app/background/phone lock.
+    hardPauseBgm();
   }
 });
+
+// Extra lifecycle guards for PWAs/mobile browsers.
+window.addEventListener('pagehide', () => hardPauseBgm());
+window.addEventListener('beforeunload', () => hardPauseBgm());
+window.addEventListener('freeze', () => hardPauseBgm());

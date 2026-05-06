@@ -48,20 +48,35 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   const closeBtn  = document.getElementById('sidebarCloseBtn');
   const bottomNav = document.querySelector('.bottom-nav');
   let isSidebarOpen = false;
+  let lockedScrollY = 0;
 
   function lockBodyScroll() {
     const doc = document.documentElement;
     const scrollbarWidth = window.innerWidth - doc.clientWidth;
-    const isCoarsePointer = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    lockedScrollY = window.scrollY || window.pageYOffset || 0;
+
+    // Freeze the page in place instead of toggling overflow, which can cause
+    // viewport width/chrome jitter on mobile.
+    document.body.style.position = 'fixed';
+    document.body.style.top = '-' + lockedScrollY + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
-    // Desktop: prevent centered layout jump when vertical scrollbar disappears.
-    // Mobile: skip compensation because dynamic viewport UI can make it unstable.
-    document.body.style.paddingRight = (!isCoarsePointer && scrollbarWidth > 0) ? scrollbarWidth + 'px' : '';
+    document.body.style.paddingRight = scrollbarWidth > 0 ? scrollbarWidth + 'px' : '';
   }
 
   function unlockBodyScroll() {
+    const restoreY = Math.abs(parseInt(document.body.style.top || '0', 10)) || lockedScrollY;
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
     document.body.style.overflow = '';
     document.body.style.paddingRight = '';
+    window.scrollTo(0, restoreY);
+    lockedScrollY = 0;
   }
 
   // ── Open / Close ──────────────────────────────────────────────────────────
