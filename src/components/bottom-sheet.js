@@ -134,6 +134,62 @@ document.addEventListener('DOMContentLoaded', function initBottomSheet() {
   closeBtn.addEventListener('click',  closeSheet);
   overlay.addEventListener('click',   closeSheet);
 
+  // ── Drag to Dismiss ───────────────────────────────────────────────────────
+  let dragStartY = 0;
+  let dragCurrentY = 0;
+  let isDraggingSheet = false;
+
+  sheet.addEventListener('touchstart', (e) => {
+    const target = e.target;
+    // Allow dragging from header/handle, or if at top of scrollable panel
+    const isHeader = target.closest('.sheet-header') || target.closest('.sheet-handle');
+    const panel = target.closest('.sheet-panel');
+    const isAtTop = !panel || panel.scrollTop <= 0;
+
+    if (isHeader || isAtTop) {
+      dragStartY = e.touches[0].clientY;
+      dragCurrentY = dragStartY;
+      isDraggingSheet = true;
+      sheet.style.transition = 'none'; // Disable transition for 1:1 tracking
+    }
+  }, { passive: true });
+
+  sheet.addEventListener('touchmove', (e) => {
+    if (!isDraggingSheet) return;
+    dragCurrentY = e.touches[0].clientY;
+    const deltaY = dragCurrentY - dragStartY;
+
+    if (deltaY > 0) {
+      // Dragging down: move sheet
+      sheet.style.transform = `translateY(${deltaY}px)`;
+    } else {
+      // Dragging up: apply resistance
+      sheet.style.transform = `translateY(${deltaY * 0.15}px)`;
+    }
+  }, { passive: true });
+
+  sheet.addEventListener('touchend', () => {
+    if (!isDraggingSheet) return;
+    isDraggingSheet = false;
+    sheet.style.transition = ''; // Restore CSS transitions
+
+    const deltaY = dragCurrentY - dragStartY;
+    if (deltaY > 120) {
+      // Dragged down far enough: close
+      sheet.style.transform = ''; // Clear inline style to let CSS handle closing
+      closeSheet();
+    } else {
+      // Snap back
+      sheet.style.transform = 'translateY(0)';
+      // Clear inline transform after animation
+      setTimeout(() => {
+        if (isSheetOpen) sheet.style.transform = '';
+      }, 400);
+    }
+    dragStartY = 0;
+    dragCurrentY = 0;
+  });
+
   // ── Navigation items ──────────────────────────────────────────────────────
   document.getElementById('sheetHomeBtn').addEventListener('click', () => {
     const main = document.getElementById('mainContent');
