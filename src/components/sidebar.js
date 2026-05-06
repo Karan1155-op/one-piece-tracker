@@ -52,9 +52,11 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   function lockBodyScroll() {
     const doc = document.documentElement;
     const scrollbarWidth = window.innerWidth - doc.clientWidth;
+    const isCoarsePointer = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
     document.body.style.overflow = 'hidden';
-    // Prevent centered layout jump when vertical scrollbar disappears.
-    document.body.style.paddingRight = scrollbarWidth > 0 ? scrollbarWidth + 'px' : '';
+    // Desktop: prevent centered layout jump when vertical scrollbar disappears.
+    // Mobile: skip compensation because dynamic viewport UI can make it unstable.
+    document.body.style.paddingRight = (!isCoarsePointer && scrollbarWidth > 0) ? scrollbarWidth + 'px' : '';
   }
 
   function unlockBodyScroll() {
