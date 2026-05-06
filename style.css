@@ -1884,7 +1884,8 @@
       top:        0;
       left:       0;
       height:     100%;
-      width:      100% !important;
+      width:      min(78vw, 320px);
+      max-width:  320px;
       z-index:    500;
       display:    flex;
       flex-direction: column;
@@ -1894,6 +1895,7 @@
       background: rgba(4, 10, 24, 0.98);
       overflow:   hidden;
       will-change: transform;
+      contain: layout paint;
     }
 
     [data-theme="light"] .sidebar {
@@ -1912,6 +1914,11 @@
     }
 
     .sidebar.open { transform: translateX(0); left: 0 !important; }
+
+    .sidebar.progress-active {
+      width: 100%;
+      max-width: 100%;
+    }
 
     /* ── Sidebar Header ──────────────────────────────���────────────────────── */
     .sidebar-header {

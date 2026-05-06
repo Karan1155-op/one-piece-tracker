@@ -129,6 +129,8 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
     if (pt) pt.classList.add('sidebar-panel-hidden');
     if (pth) pth.classList.add('sidebar-panel-hidden');
     if (pm) pm.classList.remove('sidebar-panel-slide-left');
+    activePanel = null;
+    clearProgressActiveTimer();
     sidebar.classList.remove('progress-active');
   }
 
@@ -164,10 +166,41 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   const catMovies     = document.getElementById('progressCatMovies');
   const catSpecials    = document.getElementById('progressCatSpecials');
   let activeCategory  = 'arcs';
+  let activePanel = null;
+  let progressActiveTimer = null;
+
+  function hideAllSubPanels() {
+    panelProgress.classList.add('sidebar-panel-hidden');
+    panelTools.classList.add('sidebar-panel-hidden');
+    panelThemes.classList.add('sidebar-panel-hidden');
+  }
+
+  function clearProgressActiveTimer() {
+    if (progressActiveTimer) {
+      clearTimeout(progressActiveTimer);
+      progressActiveTimer = null;
+    }
+  }
+
+  function updateMainSlideState() {
+    if (activePanel === null) {
+      panelMain.classList.remove('sidebar-panel-slide-left');
+      clearProgressActiveTimer();
+      progressActiveTimer = setTimeout(() => {
+        if (activePanel === null) sidebar.classList.remove('progress-active');
+        progressActiveTimer = null;
+      }, 350);
+    } else {
+      clearProgressActiveTimer();
+      sidebar.classList.add('progress-active');
+      panelMain.classList.add('sidebar-panel-slide-left');
+    }
+  }
 
   function showProgressPanel() {
-    sidebar.classList.add('progress-active');
-    panelMain.classList.add('sidebar-panel-slide-left');
+    hideAllSubPanels();
+    activePanel = 'progress';
+    updateMainSlideState();
     panelProgress.classList.remove('sidebar-panel-hidden');
     
     activeCategory = 'arcs';
@@ -178,9 +211,9 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   }
 
   function hideProgressPanel() {
-    sidebar.classList.remove('progress-active');
     panelProgress.classList.add('sidebar-panel-hidden');
-    panelMain.classList.remove('sidebar-panel-slide-left');
+    if (activePanel === 'progress') activePanel = null;
+    updateMainSlideState();
     setTimeout(() => document.getElementById('sidebarProgressBtn') && document.getElementById('sidebarProgressBtn').focus(), 80);
   }
 
@@ -191,16 +224,17 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   const toolsBackBtn  = document.getElementById('sidebarToolsBackBtn');
 
   function showToolsPanel() {
-    sidebar.classList.add('progress-active');
-    panelMain.classList.add('sidebar-panel-slide-left');
+    hideAllSubPanels();
+    activePanel = 'tools';
+    updateMainSlideState();
     panelTools.classList.remove('sidebar-panel-hidden');
     setTimeout(() => toolsBackBtn && toolsBackBtn.focus(), 80);
   }
 
   function hideToolsPanel() {
-    sidebar.classList.remove('progress-active');
     panelTools.classList.add('sidebar-panel-hidden');
-    panelMain.classList.remove('sidebar-panel-slide-left');
+    if (activePanel === 'tools') activePanel = null;
+    updateMainSlideState();
     setTimeout(() => document.getElementById('sidebarToolsBtn') && document.getElementById('sidebarToolsBtn').focus(), 80);
   }
 
@@ -211,17 +245,18 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   const themesBackBtn  = document.getElementById('sidebarThemesBackBtn');
 
   function showThemesPanel() {
-    sidebar.classList.add('progress-active');
-    panelMain.classList.add('sidebar-panel-slide-left');
+    hideAllSubPanels();
+    activePanel = 'themes';
+    updateMainSlideState();
     panelThemes.classList.remove('sidebar-panel-hidden');
     renderThemesPanel();
     setTimeout(() => themesBackBtn && themesBackBtn.focus(), 80);
   }
 
   function hideThemesPanel() {
-    sidebar.classList.remove('progress-active');
     panelThemes.classList.add('sidebar-panel-hidden');
-    panelMain.classList.remove('sidebar-panel-slide-left');
+    if (activePanel === 'themes') activePanel = null;
+    updateMainSlideState();
     setTimeout(() => document.getElementById('sidebarThemesBtn') && document.getElementById('sidebarThemesBtn').focus(), 80);
   }
 
