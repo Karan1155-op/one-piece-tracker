@@ -8,7 +8,7 @@
  * so the old cache is pruned automatically on the next visit.
  */
 
-const CACHE_VERSION  = 'op-tracker-v1.6';
+const CACHE_VERSION  = 'op-tracker-v1.7';
 const CACHE_NAME     = CACHE_VERSION;
 let hasNotifiedRuntimeUpdate = false;
 
@@ -30,7 +30,7 @@ const APP_SHELL = [
   './src/components/progress-modal.js',
   './src/components/music.js',
   './src/components/toast.js',
-  './src/components/sidebar.js',
+  './src/components/bottom-sheet.js',
   './src/components/movie-grid.js',
   './src/components/hero.js',
   './src/components/stats.js',

@@ -30,7 +30,7 @@ import { loadTheme, applyTheme, toggleTheme } from './components/theme.js';
 import { updateSagaTheme } from './components/saga-theme.js';
 import { showToast } from './components/toast.js';
 import { openResetDialog, closeResetDialog, confirmReset, initInfoButton, closeInfoModal, openInfoModal } from './components/dialogs.js';
-import './components/sidebar.js';
+import './components/bottom-sheet.js';
 import './components/music.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════

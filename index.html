@@ -45,108 +45,96 @@
       <button class="info-toggle glow" id="infoToggle" aria-label="View Updates">i</button>
     </div>
 
-    <button
-      class="hamburger-btn"
-      id="hamburgerBtn"
-      aria-label="Open settings"
-      aria-expanded="false"
-      aria-controls="sidebar"
-    >
-      <span class="ham-line"></span>
-      <span class="ham-line"></span>
-      <span class="ham-line"></span>
-    </button>
-
     <span class="skull-icon" aria-hidden="true">☠️</span>
     <h1>Track Your One Piece Journey</h1>
     <p class="subtitle">I'm going to be King of the Pirates</p>
   </header>
 
-  <!-- ── Sidebar ──────────────────────────────────────────────────────────── -->
-  <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+  <!-- ── Bottom Sheet (Drawer) ────────────────────────────────────────────── -->
+  <div class="sheet-overlay" id="sheetOverlay" aria-hidden="true"></div>
 
-  <aside class="sidebar" id="sidebar" role="dialog" aria-modal="true" aria-label="Navigation & Settings" aria-hidden="true">
-
-    <!-- ── Header ──────────────────────────────────────────────────────────── -->
-    <div class="sidebar-header">
-      <span class="sidebar-title">🏴‍☠️ OP Journey</span>
-      <button class="sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close menu">✕</button>
+  <div class="bottom-sheet" id="bottomSheet" role="dialog" aria-modal="true" aria-label="More options" aria-hidden="true">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    
+    <div class="sheet-header">
+      <span class="sheet-title">🏴‍☠️ OP Journey</span>
+      <button class="sheet-close-btn" id="sheetCloseBtn" aria-label="Close menu">✕</button>
     </div>
 
-    <div class="sidebar-body">
+    <div class="sheet-body">
 
       <!-- ══ PANEL 1: Main ══════════════════════════════════════════════════ -->
-      <div class="sidebar-panel" id="sidebarPanelMain">
+      <div class="sheet-panel" id="sheetPanelMain">
 
-        <div class="sidebar-section">
-          <div class="sidebar-section-label">Navigation</div>
+        <div class="sheet-section">
+          <div class="sheet-section-label">Navigation</div>
 
-          <button class="sidebar-nav-item active" id="sidebarHomeBtn" aria-label="Go to home">
-            <span class="sidebar-nav-icon">🏠</span>
-            <span class="sidebar-nav-text">
-              <span class="sidebar-nav-title">Home</span>
-              <span class="sidebar-nav-sub">Your journey overview</span>
+          <button class="sheet-nav-item active" id="sheetHomeBtn" aria-label="Go to home">
+            <span class="sheet-nav-icon">🏠</span>
+            <span class="sheet-nav-text">
+              <span class="sheet-nav-title">Home</span>
+              <span class="sheet-nav-sub">Your journey overview</span>
             </span>
-            <span class="sidebar-nav-chevron" aria-hidden="true">›</span>
+            <span class="sheet-nav-chevron" aria-hidden="true">›</span>
           </button>
 
-          <button class="sidebar-nav-item" id="sidebarProgressBtn" aria-label="View my progress">
-            <span class="sidebar-nav-icon">📊</span>
-            <span class="sidebar-nav-text">
-              <span class="sidebar-nav-title">My Progress</span>
-              <span class="sidebar-nav-sub" id="progressNavSub">Loading…</span>
+          <button class="sheet-nav-item" id="sheetProgressBtn" aria-label="View my progress">
+            <span class="sheet-nav-icon">📊</span>
+            <span class="sheet-nav-text">
+              <span class="sheet-nav-title">My Progress</span>
+              <span class="sheet-nav-sub" id="progressNavSub">Loading…</span>
             </span>
-            <span class="sidebar-nav-chevron" aria-hidden="true">›</span>
+            <span class="sheet-nav-chevron" aria-hidden="true">›</span>
           </button>
 
-          <button class="sidebar-nav-item" id="sidebarThemesBtn" aria-label="Choose application theme">
-            <span class="sidebar-nav-icon">🎨</span>
-            <span class="sidebar-nav-text">
-              <span class="sidebar-nav-title">Themes</span>
-              <span class="sidebar-nav-sub">Appearance & Accents</span>
+          <button class="sheet-nav-item" id="sheetThemesBtn" aria-label="Choose application theme">
+            <span class="sheet-nav-icon">🎨</span>
+            <span class="sheet-nav-text">
+              <span class="sheet-nav-title">Themes</span>
+              <span class="sheet-nav-sub">Appearance & Accents</span>
             </span>
-            <span class="sidebar-nav-chevron" aria-hidden="true">›</span>
+            <span class="sheet-nav-chevron" aria-hidden="true">›</span>
           </button>
 
-          <button class="sidebar-nav-item" id="sidebarToolsBtn" aria-label="Open tools and settings">
-            <span class="sidebar-nav-icon">🛠️</span>
-            <span class="sidebar-nav-text">
-              <span class="sidebar-nav-title">Tools</span>
-              <span class="sidebar-nav-sub">Save, Import, Reset</span>
+          <button class="sheet-nav-item" id="sheetToolsBtn" aria-label="Open tools and settings">
+            <span class="sheet-nav-icon">🛠️</span>
+            <span class="sheet-nav-text">
+              <span class="sheet-nav-title">Tools</span>
+              <span class="sheet-nav-sub">Save, Import, Reset</span>
             </span>
-            <span class="sidebar-nav-chevron" aria-hidden="true">›</span>
+            <span class="sheet-nav-chevron" aria-hidden="true">›</span>
           </button>
 
         </div>
 
-        <div class="sidebar-divider" role="separator"></div>
+        <div class="sheet-divider" role="separator"></div>
 
-        <div class="sidebar-section">
-          <div class="sidebar-section-label">Settings</div>
+        <div class="sheet-section">
+          <div class="sheet-section-label">Settings</div>
 
-          <div class="sidebar-row">
-            <div class="sidebar-row-info">
-              <span class="sidebar-row-icon" id="sidebarMuteIcon">🔊</span>
+          <div class="sheet-row">
+            <div class="sheet-row-info">
+              <span class="sheet-row-icon" id="sheetMuteIcon">🔊</span>
               <div>
-                <div class="sidebar-row-title">Background Music</div>
-                <div class="sidebar-row-sub" id="sidebarMuteSub">Playing</div>
+                <div class="sheet-row-title">Background Music</div>
+                <div class="sheet-row-sub" id="sheetMuteSub">Playing</div>
               </div>
             </div>
             <label class="toggle-switch" aria-label="Toggle background music">
-              <input type="checkbox" id="sidebarMuteToggle" checked>
+              <input type="checkbox" id="sheetMuteToggle" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>
 
         </div>
 
-      </div><!-- /sidebarPanelMain -->
+      </div><!-- /sheetPanelMain -->
 
       <!-- ══ PANEL 2: My Progress ═══════════════════════════════════════════ -->
-      <div class="sidebar-panel sidebar-panel-hidden" id="sidebarPanelProgress">
+      <div class="sheet-panel sheet-panel-hidden" id="sheetPanelProgress">
 
         <div class="progress-panel-header">
-          <button class="progress-back-btn" id="sidebarProgressBackBtn" aria-label="Back to settings">‹ Back</button>
+          <button class="progress-back-btn" id="sheetProgressBackBtn" aria-label="Back to settings">‹ Back</button>
           <span class="progress-panel-title">My Progress</span>
           <span class="progress-panel-count" id="progressPanelCount" aria-live="polite"></span>
         </div>
@@ -203,24 +191,24 @@
 
         <div class="progress-panel-body" id="progressPanelBody"></div>
 
-      </div><!-- /sidebarPanelProgress -->
+      </div><!-- /sheetPanelProgress -->
 
       <!-- ══ PANEL 3: Themes ════════════════════════════════════════════════ -->
-      <div class="sidebar-panel sidebar-panel-hidden" id="sidebarPanelThemes">
-        <div class="sidebar-panel-header">
-          <button class="progress-back-btn" id="sidebarThemesBackBtn" aria-label="Back to main menu">‹ Back</button>
-          <div class="sidebar-panel-title">Themes</div>
+      <div class="sheet-panel sheet-panel-hidden" id="sheetPanelThemes">
+        <div class="sheet-panel-header">
+          <button class="progress-back-btn" id="sheetThemesBackBtn" aria-label="Back to main menu">‹ Back</button>
+          <div class="sheet-panel-title">Themes</div>
         </div>
-        <div class="sidebar-panel-body" id="themesPanelBody">
+        <div class="sheet-panel-body" id="themesPanelBody">
           <!-- Populated by JS -->
         </div>
       </div>
 
       <!-- ══ PANEL 4: Tools ═════════════════════════════════════════════════ -->
-      <div class="sidebar-panel sidebar-panel-hidden" id="sidebarPanelTools">
+      <div class="sheet-panel sheet-panel-hidden" id="sheetPanelTools">
 
         <div class="progress-panel-header">
-          <button class="progress-back-btn" id="sidebarToolsBackBtn" aria-label="Back to settings">‹ Back</button>
+          <button class="progress-back-btn" id="sheetToolsBackBtn" aria-label="Back to settings">‹ Back</button>
           <span class="progress-panel-title">Tools & Log</span>
           <div id="infoButtonToolsContainer"></div>
         </div>
@@ -244,7 +232,7 @@
             </div>
           </div>
 
-          <div class="sidebar-divider" style="margin:10px 0"></div>
+          <div class="sheet-divider" style="margin:10px 0"></div>
 
           <!-- ── Save Management ───────────────────────────────────────────── -->
           <div class="tools-grid">
@@ -258,7 +246,7 @@
             </button>
           </div>
 
-          <div class="sidebar-divider" style="margin:10px 0"></div>
+          <div class="sheet-divider" style="margin:10px 0"></div>
 
           <!-- ── Danger Zone ───────────────────────────────────────────────── -->
           <button class="btn btn-danger" style="width: calc(100% - 32px); margin: 0 16px; padding: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="openResetDialog()">
@@ -266,18 +254,18 @@
             <span>Reset Journey</span>
           </button>
 
-          <div class="tools-footer">
+          <div class="sheet-footer">
             Built with ❤️ by Karan
           </div>
 
         </div>
 
-      </div><!-- /sidebarPanelTools -->
+      </div><!-- /sheetPanelTools -->
 
     </div>
 
-    <div class="sidebar-footer">☠️ One Piece Journey Tracker</div>
-  </aside>
+    <div class="sheet-footer-brand">☠️ One Piece Journey Tracker</div>
+  </div>
 
   <main id="mainContent" aria-label="Journey tracker content">
     <section class="overview-section" aria-label="Journey overview cards">
@@ -580,6 +568,10 @@
     <span class="nav-icon">📀</span>
     <span class="nav-label">Specials</span>
   </button>
+  <button class="bottom-nav-btn" id="navbtn-more" aria-label="Open more options" aria-haspopup="true" aria-expanded="false">
+    <span class="nav-icon">☰</span>
+    <span class="nav-label">More</span>
+  </button>
 </nav>
 
 <!-- ── Toast ──────────────────────────────────────────────────────────────── -->
@@ -596,7 +588,7 @@
         <div class="info-section-title">🌟 Major Additions</div>
         <ul>
           <li><strong>Bounty System:</strong> Track your progress with dynamic pirate ranks.</li>
-          <li><strong>New Sidebar:</strong> Unified navigation and settings menu.</li>
+          <li><strong>New Bottom Sheet:</strong> Unified navigation and settings menu.</li>
           <li><strong>Saga Themes:</strong> Dynamic themes for every arc (Dark + Light).</li>
         </ul>
       </div>

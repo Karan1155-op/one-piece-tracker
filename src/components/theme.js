@@ -15,7 +15,7 @@ export function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   const isDark = theme === 'dark';
 
-  // Header theme button is removed — theme is now controlled via sidebar only
+  // Header theme button is removed — theme is now controlled via bottom sheet only
   const btn = document.getElementById('themeToggle');
   if (btn) {
     btn.textContent = isDark ? '☀️' : '🌙';
@@ -38,6 +38,6 @@ export function loadTheme() {
   applyTheme(saved);
 }
 
-// Theme toggle is now in the sidebar — header button removed
+// Theme toggle is now in the bottom sheet — header button removed
 const _headerThemeBtn = document.getElementById('themeToggle');
 if (_headerThemeBtn) _headerThemeBtn.addEventListener('click', toggleTheme);

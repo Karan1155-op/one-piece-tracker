@@ -50,10 +50,10 @@ export function toggleMute() {
     }).catch(() => {});
   }
 
-  // Sync sidebar mute toggle
-  const toggle = document.getElementById('sidebarMuteToggle');
-  const icon   = document.getElementById('sidebarMuteIcon');
-  const sub    = document.getElementById('sidebarMuteSub');
+  // Sync bottom sheet mute toggle
+  const toggle = document.getElementById('sheetMuteToggle');
+  const icon   = document.getElementById('sheetMuteIcon');
+  const sub    = document.getElementById('sheetMuteSub');
   if (toggle) toggle.checked = !isMuted;
   if (icon)   icon.textContent = isMuted ? '🔇' : '🔊';
   if (sub)    sub.textContent  = isMuted ? 'Muted' : 'Playing';

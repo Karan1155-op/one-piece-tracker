@@ -119,7 +119,7 @@ export function renderProgressArcs() {
   }
 }
 
-/** Update sidebar subtitle under "My Progress" nav item */
+/** Update bottom sheet subtitle under "My Progress" nav item */
 export function updateProgressNavSub() {
   const sub = document.getElementById('progressNavSub');
   if (!sub) return;

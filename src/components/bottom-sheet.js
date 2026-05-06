@@ -11,7 +11,7 @@ import { saveState } from '../state/persistence.js';
 import { toggleMute } from './music.js';
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SIDEBAR COMPONENT
+   BOTTOM SHEET COMPONENT
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /** Helper to get completed arcs for progress displays */
@@ -28,7 +28,7 @@ function _getProgressArcs() {
   });
 }
 
-/** Update sidebar subtitle under "My Progress" nav item */
+/** Update subtitle under "My Progress" nav item */
 export function updateProgressNavSub() {
   const sub = document.getElementById('progressNavSub');
   if (!sub) return;
@@ -41,13 +41,13 @@ export function updateProgressNavSub() {
     : done.length + ' arc' + (done.length === 1 ? '' : 's') + ' done';
 }
 
-document.addEventListener('DOMContentLoaded', function initSidebar() {
-  const sidebar   = document.getElementById('sidebar');
-  const overlay   = document.getElementById('sidebarOverlay');
-  const hamburger = document.getElementById('hamburgerBtn');
-  const closeBtn  = document.getElementById('sidebarCloseBtn');
+document.addEventListener('DOMContentLoaded', function initBottomSheet() {
+  const sheet     = document.getElementById('bottomSheet');
+  const overlay   = document.getElementById('sheetOverlay');
+  const moreBtn   = document.getElementById('navbtn-more');
+  const closeBtn  = document.getElementById('sheetCloseBtn');
   const bottomNav = document.querySelector('.bottom-nav');
-  let isSidebarOpen = false;
+  let isSheetOpen = false;
   let lockedScrollY = 0;
 
   function lockBodyScroll() {
@@ -55,8 +55,6 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
     const scrollbarWidth = window.innerWidth - doc.clientWidth;
     lockedScrollY = window.scrollY || window.pageYOffset || 0;
 
-    // Freeze the page in place instead of toggling overflow, which can cause
-    // viewport width/chrome jitter on mobile.
     document.body.style.position = 'fixed';
     document.body.style.top = '-' + lockedScrollY + 'px';
     document.body.style.left = '0';
@@ -80,87 +78,85 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   }
 
   // ── Open / Close ──────────────────────────────────────────────────────────
-  function openSidebar() {
-    if (isSidebarOpen) return;
-    isSidebarOpen = true;
-    sidebar.classList.add('open');
+  function openSheet() {
+    if (isSheetOpen) return;
+    isSheetOpen = true;
+    sheet.classList.add('open');
     overlay.classList.add('open');
-    sidebar.setAttribute('aria-hidden', 'false');
-    hamburger.setAttribute('aria-expanded', 'true');
-    hamburger.classList.add('open');
-    sidebar._returnFocus = document.activeElement;
+    sheet.setAttribute('aria-hidden', 'false');
+    moreBtn.setAttribute('aria-expanded', 'true');
+    moreBtn.classList.add('active');
+    sheet._returnFocus = document.activeElement;
     lockBodyScroll();
-    if (bottomNav) bottomNav.classList.add('hidden');
 
-    const focusable = sidebar.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
+    const focusable = sheet.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
     const first = focusable[0];
     const last  = focusable[focusable.length - 1];
-    sidebar._trapHandler = (e) => {
-      if (e.key === 'Escape') { e.preventDefault(); closeSidebar(); return; }
+    sheet._trapHandler = (e) => {
+      if (e.key === 'Escape') { e.preventDefault(); closeSheet(); return; }
       if (e.key !== 'Tab') return;
       if (e.shiftKey) { if (document.activeElement === first) { e.preventDefault(); last.focus(); } }
       else            { if (document.activeElement === last)  { e.preventDefault(); first.focus(); } }
     };
-    sidebar.addEventListener('keydown', sidebar._trapHandler);
+    sheet.addEventListener('keydown', sheet._trapHandler);
     setTimeout(() => closeBtn && closeBtn.focus(), 50);
 
-    // Refresh subtitle each time sidebar opens
     updateProgressNavSub();
   }
 
-  function closeSidebar() {
-    if (!isSidebarOpen) return;
-    isSidebarOpen = false;
-    sidebar.classList.remove('open');
+  function closeSheet() {
+    if (!isSheetOpen) return;
+    isSheetOpen = false;
+    sheet.classList.remove('open');
     overlay.classList.remove('open');
-    sidebar.setAttribute('aria-hidden', 'true');
-    hamburger.setAttribute('aria-expanded', 'false');
-    hamburger.classList.remove('open');
+    sheet.setAttribute('aria-hidden', 'true');
+    moreBtn.setAttribute('aria-expanded', 'false');
+    moreBtn.classList.remove('active');
     unlockBodyScroll();
-    if (bottomNav) bottomNav.classList.remove('hidden');
-    if (sidebar._trapHandler) { sidebar.removeEventListener('keydown', sidebar._trapHandler); sidebar._trapHandler = null; }
-    if (sidebar._returnFocus) { sidebar._returnFocus.focus(); sidebar._returnFocus = null; }
+    
+    if (sheet._trapHandler) { sheet.removeEventListener('keydown', sheet._trapHandler); sheet._trapHandler = null; }
+    if (sheet._returnFocus) { sheet._returnFocus.focus(); sheet._returnFocus = null; }
+    
     // Always reset to main panel on close
-    const pp = document.getElementById('sidebarPanelProgress');
-    const pt = document.getElementById('sidebarPanelTools');
-    const pth = document.getElementById('sidebarPanelThemes');
-    const pm = document.getElementById('sidebarPanelMain');
-    if (pp) pp.classList.add('sidebar-panel-hidden');
-    if (pt) pt.classList.add('sidebar-panel-hidden');
-    if (pth) pth.classList.add('sidebar-panel-hidden');
-    if (pm) pm.classList.remove('sidebar-panel-slide-left');
+    const pp = document.getElementById('sheetPanelProgress');
+    const pt = document.getElementById('sheetPanelTools');
+    const pth = document.getElementById('sheetPanelThemes');
+    const pm = document.getElementById('sheetPanelMain');
+    if (pp) pp.classList.add('sheet-panel-hidden');
+    if (pt) pt.classList.add('sheet-panel-hidden');
+    if (pth) pth.classList.add('sheet-panel-hidden');
+    if (pm) pm.classList.remove('sheet-panel-slide-left');
     activePanel = null;
     clearProgressActiveTimer();
-    sidebar.classList.remove('progress-active');
   }
 
-  hamburger.addEventListener('click', openSidebar);
-  closeBtn.addEventListener('click',  closeSidebar);
-  overlay.addEventListener('click',   closeSidebar);
+  moreBtn.addEventListener('click', openSheet);
+  closeBtn.addEventListener('click',  closeSheet);
+  overlay.addEventListener('click',   closeSheet);
 
   // ── Navigation items ──────────────────────────────────────────────────────
-  document.getElementById('sidebarHomeBtn').addEventListener('click', () => {
+  document.getElementById('sheetHomeBtn').addEventListener('click', () => {
     const main = document.getElementById('mainContent');
     if (main) main.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    closeSidebar();
+    closeSheet();
   });
 
-  document.getElementById('sidebarProgressBtn').addEventListener('click', () => {
+  document.getElementById('sheetProgressBtn').addEventListener('click', () => {
     showProgressPanel();
   });
 
-  document.getElementById('sidebarThemesBtn').addEventListener('click', () => {
+  document.getElementById('sheetThemesBtn').addEventListener('click', () => {
     showThemesPanel();
   });
 
-  document.getElementById('sidebarToolsBtn').addEventListener('click', () => {
+  document.getElementById('sheetToolsBtn').addEventListener('click', () => {
     showToolsPanel();
   });
 
   // ── Progress Panel ────────────────────────────────────────────────────────
-  const panelMain     = document.getElementById('sidebarPanelMain');
-  const panelProgress = document.getElementById('sidebarPanelProgress');
-  const backBtn       = document.getElementById('sidebarProgressBackBtn');
+  const panelMain     = document.getElementById('sheetPanelMain');
+  const panelProgress = document.getElementById('sheetPanelProgress');
+  const backBtn       = document.getElementById('sheetProgressBackBtn');
   const catArcs       = document.getElementById('progressCatArcs');
   const catSagas      = document.getElementById('progressCatSagas');
   const catMovies     = document.getElementById('progressCatMovies');
@@ -170,9 +166,9 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   let progressActiveTimer = null;
 
   function hideAllSubPanels() {
-    panelProgress.classList.add('sidebar-panel-hidden');
-    panelTools.classList.add('sidebar-panel-hidden');
-    panelThemes.classList.add('sidebar-panel-hidden');
+    panelProgress.classList.add('sheet-panel-hidden');
+    panelTools.classList.add('sheet-panel-hidden');
+    panelThemes.classList.add('sheet-panel-hidden');
   }
 
   function clearProgressActiveTimer() {
@@ -184,16 +180,11 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
 
   function updateMainSlideState() {
     if (activePanel === null) {
-      panelMain.classList.remove('sidebar-panel-slide-left');
+      panelMain.classList.remove('sheet-panel-slide-left');
       clearProgressActiveTimer();
-      progressActiveTimer = setTimeout(() => {
-        if (activePanel === null) sidebar.classList.remove('progress-active');
-        progressActiveTimer = null;
-      }, 350);
     } else {
       clearProgressActiveTimer();
-      sidebar.classList.add('progress-active');
-      panelMain.classList.add('sidebar-panel-slide-left');
+      panelMain.classList.add('sheet-panel-slide-left');
     }
   }
 
@@ -201,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
     hideAllSubPanels();
     activePanel = 'progress';
     updateMainSlideState();
-    panelProgress.classList.remove('sidebar-panel-hidden');
+    panelProgress.classList.remove('sheet-panel-hidden');
     
     activeCategory = 'arcs';
     setCatActive('arcs');
@@ -211,53 +202,53 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   }
 
   function hideProgressPanel() {
-    panelProgress.classList.add('sidebar-panel-hidden');
+    panelProgress.classList.add('sheet-panel-hidden');
     if (activePanel === 'progress') activePanel = null;
     updateMainSlideState();
-    setTimeout(() => document.getElementById('sidebarProgressBtn') && document.getElementById('sidebarProgressBtn').focus(), 80);
+    setTimeout(() => document.getElementById('sheetProgressBtn') && document.getElementById('sheetProgressBtn').focus(), 80);
   }
 
   backBtn.addEventListener('click', hideProgressPanel);
 
   // ── Tools Panel ───────────────────────────────────────────────────────────
-  const panelTools    = document.getElementById('sidebarPanelTools');
-  const toolsBackBtn  = document.getElementById('sidebarToolsBackBtn');
+  const panelTools    = document.getElementById('sheetPanelTools');
+  const toolsBackBtn  = document.getElementById('sheetToolsBackBtn');
 
   function showToolsPanel() {
     hideAllSubPanels();
     activePanel = 'tools';
     updateMainSlideState();
-    panelTools.classList.remove('sidebar-panel-hidden');
+    panelTools.classList.remove('sheet-panel-hidden');
     setTimeout(() => toolsBackBtn && toolsBackBtn.focus(), 80);
   }
 
   function hideToolsPanel() {
-    panelTools.classList.add('sidebar-panel-hidden');
+    panelTools.classList.add('sheet-panel-hidden');
     if (activePanel === 'tools') activePanel = null;
     updateMainSlideState();
-    setTimeout(() => document.getElementById('sidebarToolsBtn') && document.getElementById('sidebarToolsBtn').focus(), 80);
+    setTimeout(() => document.getElementById('sheetToolsBtn') && document.getElementById('sheetToolsBtn').focus(), 80);
   }
 
   toolsBackBtn.addEventListener('click', hideToolsPanel);
 
   // ── Themes Panel ──────────────────────────────────────────────────────────
-  const panelThemes    = document.getElementById('sidebarPanelThemes');
-  const themesBackBtn  = document.getElementById('sidebarThemesBackBtn');
+  const panelThemes    = document.getElementById('sheetPanelThemes');
+  const themesBackBtn  = document.getElementById('sheetThemesBackBtn');
 
   function showThemesPanel() {
     hideAllSubPanels();
     activePanel = 'themes';
     updateMainSlideState();
-    panelThemes.classList.remove('sidebar-panel-hidden');
+    panelThemes.classList.remove('sheet-panel-hidden');
     renderThemesPanel();
     setTimeout(() => themesBackBtn && themesBackBtn.focus(), 80);
   }
 
   function hideThemesPanel() {
-    panelThemes.classList.add('sidebar-panel-hidden');
+    panelThemes.classList.add('sheet-panel-hidden');
     if (activePanel === 'themes') activePanel = null;
     updateMainSlideState();
-    setTimeout(() => document.getElementById('sidebarThemesBtn') && document.getElementById('sidebarThemesBtn').focus(), 80);
+    setTimeout(() => document.getElementById('sheetThemesBtn') && document.getElementById('sheetThemesBtn').focus(), 80);
   }
 
   themesBackBtn.addEventListener('click', hideThemesPanel);
@@ -269,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
 
     // 1. Appearance Section
     const appLabel = document.createElement('div');
-    appLabel.className = 'sidebar-section-label';
+    appLabel.className = 'sheet-section-label';
     appLabel.textContent = 'Appearance';
     appLabel.style.marginTop = '0';
     appLabel.style.paddingLeft = '12px';
@@ -298,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
 
     // 2. Accent Color Section
     const accLabel = document.createElement('div');
-    accLabel.className = 'sidebar-section-label';
+    accLabel.className = 'sheet-section-label';
     accLabel.textContent = 'Accent Color';
     accLabel.style.paddingLeft = '12px';
     body.appendChild(accLabel);
@@ -612,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
 
   // Re-render panel when it's open and episode changes
   document.addEventListener('episodeChanged', () => {
-    if (!panelProgress.classList.contains('sidebar-panel-hidden')) {
+    if (isSheetOpen && !panelProgress.classList.contains('sheet-panel-hidden')) {
       renderProgressPanel();
       updateProgressNavSub();
     }
@@ -620,9 +611,9 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
 
   // ── Toggle sync helpers ───────────────────────────────────────────────────
   function syncMuteToggle() {
-    const input  = document.getElementById('sidebarMuteToggle');
-    const icon   = document.getElementById('sidebarMuteIcon');
-    const sub    = document.getElementById('sidebarMuteSub');
+    const input  = document.getElementById('sheetMuteToggle');
+    const icon   = document.getElementById('sheetMuteIcon');
+    const sub    = document.getElementById('sheetMuteSub');
     const on     = localStorage.getItem('op_muted') !== 'true';
     if (input) input.checked    = on;
     if (icon)  icon.textContent = on ? '🔊' : '🔇';
@@ -630,7 +621,7 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   }
 
   // ── Mute Toggle ───────────────────────────────────────────────────────────
-  const muteToggle = document.getElementById('sidebarMuteToggle');
+  const muteToggle = document.getElementById('sheetMuteToggle');
   muteToggle.addEventListener('change', () => {
     toggleMute();
     syncMuteToggle();
@@ -642,15 +633,16 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   });
 
   // ── Keyboard Navigation ────────────────────────────────────────────────────
-  sidebar.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeSidebar();
+  sheet.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSheet();
   });
 
   // ── Bottom Nav Sync ───────────────────────────────────────────────────────
   const navButtons = bottomNav.querySelectorAll('.bottom-nav-btn');
   navButtons.forEach(btn => {
+    if (btn.id === 'navbtn-more') return;
     btn.addEventListener('click', () => {
-      closeSidebar();
+      closeSheet();
     });
   });
 });
