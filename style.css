@@ -246,6 +246,7 @@
       font-weight:  400;
       min-height:   100vh;
       overflow-x:   hidden;
+      scrollbar-gutter: stable;
       transition:   background .35s ease, color .35s ease;
       -webkit-tap-highlight-color: transparent;
     }

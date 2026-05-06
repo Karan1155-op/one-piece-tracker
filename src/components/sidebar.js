@@ -47,16 +47,32 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   const hamburger = document.getElementById('hamburgerBtn');
   const closeBtn  = document.getElementById('sidebarCloseBtn');
   const bottomNav = document.querySelector('.bottom-nav');
+  let isSidebarOpen = false;
+
+  function lockBodyScroll() {
+    const doc = document.documentElement;
+    const scrollbarWidth = window.innerWidth - doc.clientWidth;
+    document.body.style.overflow = 'hidden';
+    // Prevent centered layout jump when vertical scrollbar disappears.
+    document.body.style.paddingRight = scrollbarWidth > 0 ? scrollbarWidth + 'px' : '';
+  }
+
+  function unlockBodyScroll() {
+    document.body.style.overflow = '';
+    document.body.style.paddingRight = '';
+  }
 
   // ── Open / Close ──────────────────────────────────────────────────────────
   function openSidebar() {
+    if (isSidebarOpen) return;
+    isSidebarOpen = true;
     sidebar.classList.add('open');
     overlay.classList.add('open');
     sidebar.setAttribute('aria-hidden', 'false');
     hamburger.setAttribute('aria-expanded', 'true');
     hamburger.classList.add('open');
     sidebar._returnFocus = document.activeElement;
-    document.body.style.overflow = 'hidden';
+    lockBodyScroll();
     if (bottomNav) bottomNav.classList.add('hidden');
 
     const focusable = sidebar.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])');
@@ -76,12 +92,14 @@ document.addEventListener('DOMContentLoaded', function initSidebar() {
   }
 
   function closeSidebar() {
+    if (!isSidebarOpen) return;
+    isSidebarOpen = false;
     sidebar.classList.remove('open');
     overlay.classList.remove('open');
     sidebar.setAttribute('aria-hidden', 'true');
     hamburger.setAttribute('aria-expanded', 'false');
     hamburger.classList.remove('open');
-    document.body.style.overflow = '';
+    unlockBodyScroll();
     if (bottomNav) bottomNav.classList.remove('hidden');
     if (sidebar._trapHandler) { sidebar.removeEventListener('keydown', sidebar._trapHandler); sidebar._trapHandler = null; }
     if (sidebar._returnFocus) { sidebar._returnFocus.focus(); sidebar._returnFocus = null; }
