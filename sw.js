@@ -10,6 +10,7 @@
 
 const CACHE_VERSION  = 'op-tracker-v1.2';
 const CACHE_NAME     = CACHE_VERSION;
+let hasNotifiedRuntimeUpdate = false;
 
 /**
  * App shell — every file the tracker needs to run fully offline.
@@ -111,6 +112,15 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+/* ── Messages ────────────────────────────────────────────────────────────────
+   Allow the page to activate a waiting worker immediately after user consent.
+   ──────────────────────────────────────────────────────────────────────────── */
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'skipWaiting') {
+    self.skipWaiting();
+  }
+});
+
 /* ── Fetch ────────────────────────────────────────────────────────────────────
    Stale-while-revalidate for same-origin requests:
      1. Serve from cache immediately (fast, offline-capable).
@@ -154,8 +164,18 @@ async function staleWhileRevalidate(request) {
 
   // Kick off a background network fetch regardless of cache state
   const networkFetch = fetch(request)
-    .then(response => {
+    .then(async response => {
       if (response && response.status === 200 && response.type !== 'opaque') {
+        if (
+          !hasNotifiedRuntimeUpdate &&
+          cached &&
+          request.method === 'GET' &&
+          isStaticAssetRequest(request) &&
+          hasMeaningfulAssetChange(cached, response)
+        ) {
+          hasNotifiedRuntimeUpdate = true;
+          await notifyClientsUpdateReady();
+        }
         cache.put(request, response.clone());
       }
       return response;
@@ -208,4 +228,38 @@ function offlineFallback() {
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     }
   );
+}
+
+function isStaticAssetRequest(request) {
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  return (
+    request.destination === 'script' ||
+    request.destination === 'style' ||
+    request.destination === 'document' ||
+    request.destination === 'manifest'
+  );
+}
+
+function hasMeaningfulAssetChange(oldRes, newRes) {
+  const oldTag = oldRes.headers.get('etag');
+  const newTag = newRes.headers.get('etag');
+  if (oldTag && newTag) return oldTag !== newTag;
+
+  const oldMod = oldRes.headers.get('last-modified');
+  const newMod = newRes.headers.get('last-modified');
+  if (oldMod && newMod) return oldMod !== newMod;
+
+  const oldLen = oldRes.headers.get('content-length');
+  const newLen = newRes.headers.get('content-length');
+  if (oldLen && newLen) return oldLen !== newLen;
+
+  return false;
+}
+
+async function notifyClientsUpdateReady() {
+  const clientsList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  for (const client of clientsList) {
+    client.postMessage({ type: 'APP_UPDATE_READY' });
+  }
 }

@@ -665,6 +665,21 @@
      ═══════════════════════════════════════════════════════════════════════════ -->
 <script>
   if ('serviceWorker' in navigator) {
+    function showReloadUpdateToast(onApply) {
+      const t = document.getElementById('toast');
+      if (!t) return;
+      t.textContent = 'New update ready. Tap to reload.';
+      t.className = 'toast show elbaf-toast';
+      t.style.pointerEvents = 'auto';
+      t.style.cursor = 'pointer';
+      t.onclick = () => {
+        t.onclick = null;
+        t.style.pointerEvents = '';
+        t.style.cursor = '';
+        onApply();
+      };
+    }
+
     // Defer registration until after the page has fully loaded so the SW
     // install/pre-caching doesn't compete with the page's own network requests.
     window.addEventListener('load', () => {
@@ -672,36 +687,49 @@
         .register('./sw.js', { scope: './' })
         .then(registration => {
           console.log('[PWA] Service worker registered — scope:', registration.scope);
+          let hasShownUpdateToast = false;
+
+          function promptToReload(waitingWorker) {
+            if (!waitingWorker || hasShownUpdateToast) return;
+            hasShownUpdateToast = true;
+            showReloadUpdateToast(() => {
+              waitingWorker.postMessage({ action: 'skipWaiting' });
+            });
+          }
+
+          // If an update is already waiting when the page loads, prompt immediately.
+          if (registration.waiting) {
+            promptToReload(registration.waiting);
+          }
 
           // Check for a waiting (updated) worker and notify the user.
           // If a new sw.js has been deployed, this fires so the user can
           // refresh to get the latest version.
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing;
+            if (!newWorker) return;
             newWorker.addEventListener('statechange', () => {
               if (
                 newWorker.state === 'installed' &&
                 navigator.serviceWorker.controller
               ) {
-                // A new version is cached and waiting — surface it via the
-                // existing showToast() helper if it is already defined.
-                if (typeof showToast === 'function') {
-                  showToast('🆕 Update ready! Click here to apply.', 'elbaf');
-                  
-                  // Grab the toast element and stop it from fading away!
-                  const t = document.getElementById('toast');
-                  clearTimeout(toastTimer); 
-                  
-                  // Make it clickable so it reloads the app
-                  t.style.pointerEvents = 'auto'; 
-                  t.style.cursor = 'pointer';
-                  t.onclick = () => {
-                    newWorker.postMessage({ action: 'skipWaiting' });
-                    setTimeout(() => window.location.reload(), 300);
-                  };
-                }
+                promptToReload(newWorker);
               }
             });
+          });
+
+          // Poll for updates so changes are detected even in long-lived tabs.
+          setInterval(() => registration.update(), 60000);
+
+          navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'APP_UPDATE_READY') {
+              showReloadUpdateToast(() => window.location.reload());
+            }
+          });
+
+          // When the new worker takes control after skipWaiting, reload once.
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
           });
         })
         .catch(err => {
