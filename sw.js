@@ -8,7 +8,7 @@
  * so the old cache is pruned automatically on the next visit.
  */
 
-const CACHE_VERSION  = 'op-tracker-v38';
+const CACHE_VERSION  = 'op-tracker-v1.1';
 const CACHE_NAME     = CACHE_VERSION;
 
 /**
@@ -17,10 +17,37 @@ const CACHE_NAME     = CACHE_VERSION;
  */
 const APP_SHELL = [
   './index.html',
+  './style.css',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './assets/music_track.mp3',
+  './src/main.js',
+  './src/components/dialogs.js',
+  './src/components/arc-grid.js',
+  './src/components/theme.js',
+  './src/components/progress-modal.js',
+  './src/components/music.js',
+  './src/components/toast.js',
+  './src/components/sidebar.js',
+  './src/components/movie-grid.js',
+  './src/components/hero.js',
+  './src/components/stats.js',
+  './src/components/special-grid.js',
+  './src/components/filler-actions.js',
+  './src/data/arcs.js',
+  './src/data/levels.js',
+  './src/data/movies.js',
+  './src/data/specials.js',
+  './src/state/state.js',
+  './src/state/persistence.js',
+  './src/state/mutations.js',
+  './src/utils/date.js',
+  './src/utils/scroll.js',
+  './src/utils/arc-helpers.js',
+  './src/utils/validation.js',
+  './src/utils/export-import.js',
+  './src/utils/api.js'
 ];
 
 /**
