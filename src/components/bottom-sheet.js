@@ -141,6 +141,9 @@ document.addEventListener('DOMContentLoaded', function initBottomSheet() {
 
   sheet.addEventListener('touchstart', (e) => {
     const target = e.target;
+    // Don't initiate drag if tapping a button or toggle
+    if (target.closest('button') || target.closest('.toggle-switch')) return;
+
     // Allow dragging from header/handle, or if at top of scrollable panel
     const isHeader = target.closest('.sheet-header') || target.closest('.sheet-handle');
     const panel = target.closest('.sheet-panel');
@@ -158,13 +161,29 @@ document.addEventListener('DOMContentLoaded', function initBottomSheet() {
     if (!isDraggingSheet) return;
     dragCurrentY = e.touches[0].clientY;
     const deltaY = dragCurrentY - dragStartY;
+    
+    const isExpanded = sheet.classList.contains('expanded');
 
     if (deltaY > 0) {
-      // Dragging down: move sheet
-      sheet.style.transform = `translateY(${deltaY}px)`;
+      // Dragging down
+      if (isExpanded) {
+        // Shrink from full height
+        sheet.style.height = `calc(100vh - ${deltaY}px)`;
+        sheet.style.transform = 'translateY(0)';
+      } else {
+        // Push sheet down
+        sheet.style.transform = `translateY(${deltaY}px)`;
+      }
     } else {
-      // Dragging up: apply resistance
-      sheet.style.transform = `translateY(${deltaY * 0.15}px)`;
+      // Dragging up
+      if (isExpanded) {
+        // Resist at top
+        sheet.style.transform = `translateY(${deltaY * 0.15}px)`;
+      } else {
+        // Expand from default height
+        sheet.style.height = `calc(85vh + ${Math.abs(deltaY)}px)`;
+        sheet.style.transform = 'translateY(0)';
+      }
     }
   }, { passive: true });
 
@@ -174,17 +193,35 @@ document.addEventListener('DOMContentLoaded', function initBottomSheet() {
     sheet.style.transition = ''; // Restore CSS transitions
 
     const deltaY = dragCurrentY - dragStartY;
-    if (deltaY > 120) {
-      // Dragged down far enough: close
-      sheet.style.transform = ''; // Clear inline style to let CSS handle closing
-      closeSheet();
+    const isExpanded = sheet.classList.contains('expanded');
+
+    if (isExpanded) {
+      if (deltaY > 80) {
+        // Dragged down enough: go back to 85vh
+        sheet.classList.remove('expanded');
+        sheet.style.height = '';
+        sheet.style.transform = '';
+      } else {
+        // Snap back to 100vh
+        sheet.style.height = '100vh';
+        sheet.style.transform = '';
+      }
     } else {
-      // Snap back
-      sheet.style.transform = 'translateY(0)';
-      // Clear inline transform after animation
-      setTimeout(() => {
-        if (isSheetOpen) sheet.style.transform = '';
-      }, 400);
+      if (deltaY > 120) {
+        // Dragged down enough: close
+        sheet.style.transform = '';
+        sheet.style.height = '';
+        closeSheet();
+      } else if (deltaY < -60) {
+        // Dragged up enough: expand
+        sheet.classList.add('expanded');
+        sheet.style.height = '100vh';
+        sheet.style.transform = '';
+      } else {
+        // Snap back to 85vh
+        sheet.style.height = '';
+        sheet.style.transform = '';
+      }
     }
     dragStartY = 0;
     dragCurrentY = 0;
