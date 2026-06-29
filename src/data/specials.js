@@ -28,5 +28,5 @@ export const SPECIALS = [
   { id: 'sp22', name: 'Film Gold Episode 0',             type: 'OVA',     icon: '💰', requiredEpisode: 750, rec: 'watch', note: 'Short prologue leading straight into Film Gold.' },
   { id: 'sp23', name: 'Monsters: 103 Mercies',           type: 'OVA',     icon: '🐉', requiredEpisode: 1089, rec: 'high', note: '⭐ Canon Ryuma backstory one-shot (Wano Saga).' },
   { id: 'sp24', name: 'One Piece Fan Letter',            type: 'Special', icon: '✉️', requiredEpisode: 1122, rec: 'high', note: '⭐ Masterpiece 25th-anniversary special. Absolute must-watch.' },
-  { id: 'sp25', name: 'One Piece Heroines',            type: 'Special', icon: '💅', requiredEpisode: N/A, rec: 'skip', note: 'The charm of the heroines of ONE PIECE. Broadcasts in japan on 5th of july' }
+  { id: 'sp25', name: 'One Piece Heroines',            type: 'Special', icon: '💅', requiredEpisode: 1156, rec: 'high', note: '⭐ The charm of the heroines of ONE PIECE. Broadcasting in Japan on July 5th 2026!' }
 ];
