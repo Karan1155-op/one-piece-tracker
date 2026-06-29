@@ -27,5 +27,6 @@ export const SPECIALS = [
   { id: 'sp21', name: 'Heart of Gold',                   type: 'Special', icon: '💛', requiredEpisode: 750, rec: 'watch', note: 'Direct tie-in and prequel to Film Gold.' },
   { id: 'sp22', name: 'Film Gold Episode 0',             type: 'OVA',     icon: '💰', requiredEpisode: 750, rec: 'watch', note: 'Short prologue leading straight into Film Gold.' },
   { id: 'sp23', name: 'Monsters: 103 Mercies',           type: 'OVA',     icon: '🐉', requiredEpisode: 1089, rec: 'high', note: '⭐ Canon Ryuma backstory one-shot (Wano Saga).' },
-  { id: 'sp24', name: 'One Piece Fan Letter',            type: 'Special', icon: '✉️', requiredEpisode: 1122, rec: 'high', note: '⭐ Masterpiece 25th-anniversary special. Absolute must-watch.' }
+  { id: 'sp24', name: 'One Piece Fan Letter',            type: 'Special', icon: '✉️', requiredEpisode: 1122, rec: 'high', note: '⭐ Masterpiece 25th-anniversary special. Absolute must-watch.' },
+  { id: 'sp25', name: 'One Piece Heroines',            type: 'Special', icon: '✉️', requiredEpisode: N/A, rec: 'skip', note: 'The charm of the heroines of ONE PIECE. Broadcasts in japan on 5th of july' }
 ];
