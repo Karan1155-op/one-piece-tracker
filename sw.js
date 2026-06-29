@@ -8,8 +8,8 @@
  * so the old cache is pruned automatically on the next visit.
  */
 
-const CACHE_VERSION  = 'op-tracker-v1.9';
-const CACHE_NAME     = CACHE_VERSION;
+const CACHE_VERSION = 'op-tracker-v1.91';
+const CACHE_NAME = CACHE_VERSION;
 let hasNotifiedRuntimeUpdate = false;
 
 /**
@@ -138,13 +138,13 @@ self.addEventListener('fetch', event => {
 
   // ── External API calls: network-only (let them fail offline naturally) ──
   const isApiCall = url.hostname.includes('jikan.moe') ||
-                    url.hostname.includes('anilist.co');
+    url.hostname.includes('anilist.co');
   if (isApiCall) return;  // don't intercept — fall through to browser default
 
   // ── Same-origin + Google Fonts: stale-while-revalidate ──────────────────
   if (url.origin === self.location.origin ||
-      url.hostname.includes('fonts.googleapis.com') ||
-      url.hostname.includes('fonts.gstatic.com')) {
+    url.hostname.includes('fonts.googleapis.com') ||
+    url.hostname.includes('fonts.gstatic.com')) {
 
     event.respondWith(staleWhileRevalidate(request));
     return;
@@ -159,8 +159,8 @@ self.addEventListener('fetch', event => {
  * background. Falls back to a network fetch if there's no cached version.
  */
 async function staleWhileRevalidate(request) {
-  const cache    = await caches.open(CACHE_NAME);
-  const cached   = await cache.match(request);
+  const cache = await caches.open(CACHE_NAME);
+  const cached = await cache.match(request);
 
   // Kick off a background network fetch regardless of cache state
   const networkFetch = fetch(request)
@@ -224,7 +224,7 @@ function offlineFallback() {
 </body>
 </html>`,
     {
-      status:  200,
+      status: 200,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     }
   );
